@@ -1,24 +1,48 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useVaultStore, VaultItem } from '@/lib/store';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Key, FileText, Loader2, RefreshCw, Download, Settings } from 'lucide-react';
-import { logout } from '@/lib/auth';
-import { exportVault } from '@/lib/export';
-import { toast } from 'sonner';
-import { ItemList } from '@/components/vault/ItemList';
-import { ItemDialog } from '@/components/vault/ItemDialog';
-import { SecurityAudit } from '@/components/vault/SecurityAudit';
-import { useAutoLock } from '@/hooks/useAutoLock';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useVaultStore, VaultItem } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Lock,
+  Plus,
+  Key,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Download,
+  Settings,
+} from "lucide-react";
+import { logout } from "@/lib/auth";
+import { exportVault } from "@/lib/export";
+import { toast } from "sonner";
+import { ItemList } from "@/components/vault/ItemList";
+import { ItemDialog } from "@/components/vault/ItemDialog";
+import { SecurityAudit } from "@/components/vault/SecurityAudit";
+import { useAutoLock } from "@/hooks/useAutoLock";
 
 export default function VaultDashboard() {
   const router = useRouter();
-  const { isUnlocked, vaultData, lockVault, isSyncing, syncError, syncVault, encryptionKey, salt } = useVaultStore();
-  const [activeTab, setActiveTab] = useState('all');
+  const {
+    isUnlocked,
+    vaultData,
+    lockVault,
+    isSyncing,
+    syncError,
+    syncVault,
+    encryptionKey,
+    salt,
+  } = useVaultStore();
+  const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
 
@@ -27,20 +51,20 @@ export default function VaultDashboard() {
 
   useEffect(() => {
     if (!isUnlocked) {
-      router.push('/app/unlock');
+      router.push("/app/unlock");
     }
   }, [isUnlocked, router]);
 
   const handleExport = async () => {
     if (!vaultData || !encryptionKey || !salt) {
-      toast.error('Cannot export: Vault is locked or missing data');
+      toast.error("Cannot export: Vault is locked or missing data");
       return;
     }
     try {
       await exportVault(vaultData, encryptionKey, salt);
-      toast.success('Vault backup exported successfully');
+      toast.success("Vault backup exported successfully");
     } catch (error) {
-      toast.error('Failed to export vault backup');
+      toast.error("Failed to export vault backup");
     }
   };
 
@@ -51,7 +75,7 @@ export default function VaultDashboard() {
   const handleLock = async () => {
     lockVault();
     await logout();
-    router.push('/');
+    router.push("/");
   };
 
   const handleCreateNew = () => {
@@ -65,8 +89,8 @@ export default function VaultDashboard() {
   };
 
   const items = vaultData.items || [];
-  const logins = items.filter((item) => item.type === 'login');
-  const notes = items.filter((item) => item.type === 'secure_note');
+  const logins = items.filter((item) => item.type === "login");
+  const notes = items.filter((item) => item.type === "secure_note");
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
@@ -75,30 +99,36 @@ export default function VaultDashboard() {
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <h1 className="text-xl font-bold">Gupt Vault</h1>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => syncVault()} 
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => syncVault()}
               disabled={isSyncing}
               title="Sync Now"
             >
-              <RefreshCw className={`w-4 h-4 text-neutral-500 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 text-neutral-500 ${isSyncing ? "animate-spin" : ""}`}
+              />
             </Button>
             {syncError && (
               <span className="text-xs text-red-500">Sync failed</span>
             )}
           </div>
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExport}
               title="Export Backup"
             >
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push('/app/settings')}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/app/settings")}
+            >
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
@@ -116,16 +146,31 @@ export default function VaultDashboard() {
         <div className="w-full md:w-64 shrink-0">
           <Card>
             <CardContent className="p-2">
-              <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                orientation="vertical"
+                className="w-full"
+              >
                 <TabsList className="flex flex-col h-auto bg-transparent space-y-1">
-                  <TabsTrigger value="all" className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800">
+                  <TabsTrigger
+                    value="all"
+                    className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800"
+                  >
                     All Items ({items.length})
                   </TabsTrigger>
-                  <TabsTrigger value="logins" className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800">
+                  <TabsTrigger
+                    value="logins"
+                    className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800"
+                  >
                     <Key className="w-4 h-4 mr-2" /> Logins ({logins.length})
                   </TabsTrigger>
-                  <TabsTrigger value="notes" className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800">
-                    <FileText className="w-4 h-4 mr-2" /> Secure Notes ({notes.length})
+                  <TabsTrigger
+                    value="notes"
+                    className="w-full justify-start data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-neutral-800"
+                  >
+                    <FileText className="w-4 h-4 mr-2" /> Secure Notes (
+                    {notes.length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -136,7 +181,7 @@ export default function VaultDashboard() {
         {/* List Area */}
         <div className="flex-1 space-y-4">
           <SecurityAudit />
-          
+
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold capitalize">{activeTab}</h2>
             <Button onClick={handleCreateNew}>
@@ -147,18 +192,24 @@ export default function VaultDashboard() {
 
           <Card>
             <CardContent className="p-0">
-              {activeTab === 'all' && <ItemList items={items} onEdit={handleEditItem} />}
-              {activeTab === 'logins' && <ItemList items={logins} onEdit={handleEditItem} />}
-              {activeTab === 'notes' && <ItemList items={notes} onEdit={handleEditItem} />}
+              {activeTab === "all" && (
+                <ItemList items={items} onEdit={handleEditItem} />
+              )}
+              {activeTab === "logins" && (
+                <ItemList items={logins} onEdit={handleEditItem} />
+              )}
+              {activeTab === "notes" && (
+                <ItemList items={notes} onEdit={handleEditItem} />
+              )}
             </CardContent>
           </Card>
         </div>
       </main>
 
-      <ItemDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-        item={selectedItem} 
+      <ItemDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        item={selectedItem}
       />
     </div>
   );

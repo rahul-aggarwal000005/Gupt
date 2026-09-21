@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useVaultStore } from '@/lib/store';
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useVaultStore } from "@/lib/store";
 
 // Default auto-lock time: 5 minutes
 const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
@@ -15,7 +15,7 @@ export function useAutoLock(timeoutMs: number = AUTO_LOCK_TIMEOUT_MS) {
 
     const handleLock = () => {
       lockVault();
-      router.push('/app/unlock');
+      router.push("/app/unlock");
     };
 
     const resetTimer = () => {
@@ -26,7 +26,13 @@ export function useAutoLock(timeoutMs: number = AUTO_LOCK_TIMEOUT_MS) {
     };
 
     // Events that indicate user activity
-    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "scroll",
+      "touchstart",
+    ];
 
     // Initial setup
     resetTimer();
@@ -38,14 +44,14 @@ export function useAutoLock(timeoutMs: number = AUTO_LOCK_TIMEOUT_MS) {
 
     // Also lock if the tab becomes hidden for too long (optional security enhancement)
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === "hidden") {
         // Could lock immediately here if desired:
         // handleLock();
       } else {
         resetTimer();
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       if (timeoutRef.current) {
@@ -54,7 +60,7 @@ export function useAutoLock(timeoutMs: number = AUTO_LOCK_TIMEOUT_MS) {
       events.forEach((event) => {
         document.removeEventListener(event, resetTimer);
       });
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [isUnlocked, lockVault, router, timeoutMs]);
 }

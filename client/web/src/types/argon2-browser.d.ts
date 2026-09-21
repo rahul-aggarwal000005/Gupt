@@ -1,4 +1,4 @@
-declare module 'argon2-browser/dist/argon2-bundled.min.js' {
+declare module "argon2-browser/dist/argon2-bundled.min.js" {
   export enum ArgonType {
     Argon2d = 0,
     Argon2i = 1,
@@ -21,5 +21,7 @@ declare module 'argon2-browser/dist/argon2-bundled.min.js' {
     encoded: string;
   }
 
-  export function hash(options: Argon2BrowserOptions): Promise<Argon2BrowserResult>;
+  export function hash(
+    options: Argon2BrowserOptions,
+  ): Promise<Argon2BrowserResult>;
 }

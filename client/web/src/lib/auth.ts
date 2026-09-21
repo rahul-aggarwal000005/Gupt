@@ -1,36 +1,45 @@
-import { api } from './api';
+import { api } from "./api";
 
 export interface User {
   id: string;
   email: string;
 }
 
-export const register = async (email: string, password: string): Promise<{ user: User }> => {
-  const response = await api.post('/api/auth/register', { email, password });
+export const register = async (
+  email: string,
+  password: string,
+): Promise<{ user: User }> => {
+  const response = await api.post("/api/auth/register", { email, password });
   return response.data;
 };
 
-export const login = async (email: string, password: string): Promise<{ user: User }> => {
-  const response = await api.post('/api/auth/login', { email, password });
+export const login = async (
+  email: string,
+  password: string,
+): Promise<{ user: User }> => {
+  const response = await api.post("/api/auth/login", { email, password });
   return response.data;
 };
 
 export const logout = async (): Promise<void> => {
-  await api.post('/api/auth/logout');
+  await api.post("/api/auth/logout");
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    const response = await api.get('/api/auth/me');
+    const response = await api.get("/api/auth/me");
     return response.data.user;
   } catch (error) {
     return null;
   }
 };
 
-export const getVault = async (): Promise<{ version: number; encryptedData: string } | null> => {
+export const getVault = async (): Promise<{
+  version: number;
+  encryptedData: string;
+} | null> => {
   try {
-    const response = await api.get('/api/vault');
+    const response = await api.get("/api/vault");
     return response.data;
   } catch (err) {
     const error = err as { response?: { status?: number } };
@@ -41,7 +50,10 @@ export const getVault = async (): Promise<{ version: number; encryptedData: stri
   }
 };
 
-export const updateVault = async (version: number, encryptedData: string): Promise<{ version: number }> => {
-  const response = await api.put('/api/vault', { version, encryptedData });
+export const updateVault = async (
+  version: number,
+  encryptedData: string,
+): Promise<{ version: number }> => {
+  const response = await api.put("/api/vault", { version, encryptedData });
   return response.data;
 };

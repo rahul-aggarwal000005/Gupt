@@ -1,4 +1,4 @@
-import argon2 from 'argon2-browser/dist/argon2-bundled.min.js';
+import argon2 from "argon2-browser/dist/argon2-bundled.min.js";
 
 // Generate a random salt
 export const generateSalt = (length: number = 16): Uint8Array => {
@@ -11,7 +11,10 @@ export const generateIV = (): Uint8Array => {
 };
 
 // Derive a 256-bit key from a password and salt using Argon2id
-export const deriveKey = async (password: string, salt: Uint8Array): Promise<CryptoKey> => {
+export const deriveKey = async (
+  password: string,
+  salt: Uint8Array,
+): Promise<CryptoKey> => {
   const result = await argon2.hash({
     pass: password,
     salt: salt,
@@ -23,11 +26,11 @@ export const deriveKey = async (password: string, salt: Uint8Array): Promise<Cry
 
   // Import the raw key material into a CryptoKey for AES-GCM
   return await crypto.subtle.importKey(
-    'raw',
+    "raw",
     result.hash as BufferSource,
-    { name: 'AES-GCM' },
+    { name: "AES-GCM" },
     false,
-    ['encrypt', 'decrypt']
+    ["encrypt", "decrypt"],
   );
 };
 
@@ -35,18 +38,18 @@ export const deriveKey = async (password: string, salt: Uint8Array): Promise<Cry
 export const encryptVault = async (
   plaintext: string,
   key: CryptoKey,
-  iv: Uint8Array
+  iv: Uint8Array,
 ): Promise<ArrayBuffer> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(plaintext);
 
   return await crypto.subtle.encrypt(
     {
-      name: 'AES-GCM',
+      name: "AES-GCM",
       iv: iv as BufferSource,
     },
     key,
-    data
+    data,
   );
 };
 
@@ -54,15 +57,15 @@ export const encryptVault = async (
 export const decryptVault = async (
   ciphertext: ArrayBuffer | Uint8Array,
   key: CryptoKey,
-  iv: Uint8Array
+  iv: Uint8Array,
 ): Promise<string> => {
   const decryptedData = await crypto.subtle.decrypt(
     {
-      name: 'AES-GCM',
+      name: "AES-GCM",
       iv: iv as BufferSource,
     },
     key,
-    ciphertext as BufferSource
+    ciphertext as BufferSource,
   );
 
   const decoder = new TextDecoder();
@@ -72,7 +75,7 @@ export const decryptVault = async (
 // Utility to convert ArrayBuffer/Uint8Array to Base64
 export const bufferToBase64 = (buffer: ArrayBuffer | Uint8Array): string => {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
