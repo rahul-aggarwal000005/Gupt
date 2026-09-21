@@ -116,12 +116,12 @@ _Tests that memory is cleared on lock, and that the Master Password can successf
 
 _Tests the passwordless login flow._
 
-- [ ] Click **Settings** in the top header
-- [ ] Click **Register New Passkey**
-- [ ] Follow the OS prompt to register (TouchID, FaceID, Windows Hello, etc.)
-- [ ] Click **Lock & Sign Out**
-- [ ] Go to the **Login** page
-- [ ] Enter your email (`testuser@example.com`)
-- [ ] Click the **Passkey** button
-- [ ] Follow the OS prompt for biometrics
-- [ ] Verify: Successfully logged in and taken to the `/app/unlock` screen (Master Password is still required to decrypt the vault)
+- [x] Click **Settings** in the top header
+- [x] Click **Register New Passkey**
+- [x] Follow the OS prompt to register (TouchID, FaceID, Windows Hello, etc.)
+- [x] Click **Lock & Sign Out**
+- [x] Go to the **Login** page
+- [x] Enter your email (`testuser@example.com`)
+- [x] Click the **Passkey** button
+- [x] Follow the OS prompt for biometrics
+- [x] Verify: Successfully logged in and taken to the `/app/unlock` screen (Master Password is still required to decrypt the vault)
