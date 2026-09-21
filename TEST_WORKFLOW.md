@@ -58,9 +58,9 @@ _Tests that items can be encrypted, saved, decrypted, and modified._
 
 ### D. Delete Item
 
-- [ ] Click the **Edit** button next to the "Router Config" item
-- [ ] Click the red **Delete Item** button at the bottom
-- [ ] Verify: "Router Config" is removed from the vault list
+- [x] Click the **Edit** button next to the "Router Config" item
+- [x] Click the red **Delete Item** button at the bottom
+- [x] Verify: "Router Config" is removed from the vault list
 
 ## 4. Security Features & Export
 
@@ -68,24 +68,24 @@ _Tests local data analysis, clipboard protection, and encrypted backups._
 
 ### A. Clipboard Protection
 
-- [ ] On the dashboard, click the **Copy** icon next to the Netflix password
-- [ ] Verify: A toast notification appears ("Password copied. Clipboard will clear in 30s.")
-- [ ] Wait 30 seconds and attempt to paste
-- [ ] Verify: Clipboard is cleared (or contains previous non-sensitive content)
+- [x] On the dashboard, click the **Copy** icon next to the Netflix password
+- [x] Verify: A toast notification appears ("Password copied. Clipboard will clear in 30s.")
+- [x] Wait 30 seconds and attempt to paste
+- [x] Verify: Clipboard is cleared (or contains previous non-sensitive content)
 
 ### B. Security Audit
 
-- [ ] Check the **Security Audit** section at the top of the dashboard
-- [ ] Verify: It accurately reflects the state of your passwords (e.g., 0 Weak Passwords if you used the generator)
-- [ ] Create a temporary item with the password `12345`
-- [ ] Verify: "Weak Passwords" count updates to `1`
+- [x] Check the **Security Audit** section at the top of the dashboard
+- [x] Verify: It accurately reflects the state of your passwords (e.g., 0 Weak Passwords if you used the generator)
+- [x] Create a temporary item with the password `12345`
+- [x] Verify: "Weak Passwords" count updates to `1`
 
 ### C. Encrypted Export
 
-- [ ] Click the **Export** button in the top header
-- [ ] Verify: A file named `gupt-vault-backup-YYYY-MM-DD.json` downloads
-- [ ] Open the file in a text editor
-- [ ] Verify: The file contains JSON with `"algorithm": "AES-256-GCM"`, `"salt"`, `"iv"`, and a Base64 `"ciphertext"`. No plaintext passwords or titles should be visible.
+- [x] Click the **Export** button in the top header
+- [x] Verify: A file named `gupt-vault-backup-YYYY-MM-DD.json` downloads
+- [x] Open the file in a text editor
+- [x] Verify: The file contains JSON with `"algorithm": "AES-256-GCM"`, `"salt"`, `"iv"`, and a Base64 `"ciphertext"`. No plaintext passwords or titles should be visible.
 
 ## 5. Lock, Unlock & Sync
 
@@ -93,8 +93,8 @@ _Tests that memory is cleared on lock, and that the Master Password can successf
 
 ### A. Lock the Vault
 
-- [ ] Click **Lock & Sign Out** in the top header
-- [ ] Verify: Redirected to the home page. The decrypted vault is cleared from memory.
+- [x] Click **Lock & Sign Out** in the top header
+- [x] Verify: Redirected to the home page. The decrypted vault is cleared from memory.
 
 ### B. Log Back In
 
@@ -105,12 +105,12 @@ _Tests that memory is cleared on lock, and that the Master Password can successf
 
 ### C. Unlock the Vault
 
-- [ ] Enter an incorrect Master Password (e.g., `WrongPassword`)
-- [ ] Click **Unlock**
-- [ ] Verify: Error message "Invalid Master Password" appears
-- [ ] Enter the correct Master Password (`MySuperSecretVaultKey99$`)
-- [ ] Click **Unlock**
-- [ ] Verify: Redirected to the dashboard, and your items are visible again
+- [x] Enter an incorrect Master Password (e.g., `WrongPassword`)
+- [x] Click **Unlock**
+- [x] Verify: Error message "Invalid Master Password" appears
+- [x] Enter the correct Master Password (`MySuperSecretVaultKey99$`)
+- [x] Click **Unlock**
+- [x] Verify: Redirected to the dashboard, and your items are visible again
 
 ## 6. WebAuthn / Passkeys (Optional)
 
