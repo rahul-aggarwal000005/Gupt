@@ -15,13 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { register } from "@/lib/auth";
-import { Shield, ArrowLeft } from "lucide-react";
+import { Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +64,7 @@ export default function RegisterPage() {
           className="w-full max-w-md"
         >
           <Card className="border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-2xl bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl">
-            <CardHeader className="space-y-2 pb-6 pt-8">
+            <CardHeader className="space-y-2 pb-6 pt-8 px-6 sm:px-8">
               <div className="flex items-center justify-center space-x-3 mb-2">
                 <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-xl flex items-center justify-center">
                   <Shield className="w-5 h-5" />
@@ -77,7 +78,7 @@ export default function RegisterPage() {
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-6 pb-6">
+              <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
                 <div className="space-y-2.5">
                   <Label
                     htmlFor="email"
@@ -102,16 +103,29 @@ export default function RegisterPage() {
                   >
                     Password
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                   <p className="text-xs text-slate-500 mt-1.5">
                     Must be at least 8 characters long.
                   </p>
@@ -120,7 +134,7 @@ export default function RegisterPage() {
                   <p className="text-sm text-red-500 font-medium">{error}</p>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col space-y-4 pt-2 pb-8">
+              <CardFooter className="flex flex-col space-y-4 pt-2 pb-8 px-6 sm:px-8">
                 <Button
                   className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
                   type="submit"

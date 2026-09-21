@@ -17,12 +17,13 @@ import {
 import { deriveKey, decryptVault, base64ToBuffer } from "@/lib/crypto";
 import { getVault } from "@/lib/auth";
 import { useVaultStore, EncryptedVaultPayload } from "@/lib/store";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function UnlockVaultPage() {
   const router = useRouter();
   const [masterPassword, setMasterPassword] = useState("");
+  const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -141,15 +142,28 @@ export default function UnlockVaultPage() {
                       Master Password
                     </Label>
                   </div>
-                  <Input
-                    id="masterPassword"
-                    type="password"
-                    placeholder="Enter your Master Password"
-                    value={masterPassword}
-                    onChange={(e) => setMasterPassword(e.target.value)}
-                    required
-                    className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="masterPassword"
+                      type={showMasterPassword ? "text" : "password"}
+                      placeholder="Enter your Master Password"
+                      value={masterPassword}
+                      onChange={(e) => setMasterPassword(e.target.value)}
+                      required
+                      className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowMasterPassword(!showMasterPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {showMasterPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 {error && (
                   <p className="text-sm text-red-500 font-medium">{error}</p>

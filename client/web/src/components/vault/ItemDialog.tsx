@@ -118,20 +118,22 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] p-6 sm:p-8">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{item ? "Edit Item" : "Add New Item"}</DialogTitle>
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {item ? "Edit Item" : "Add New Item"}
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="space-y-5 py-4">
             {!item && (
               <div className="flex gap-2">
                 <Button
                   type="button"
                   variant={type === "login" ? "default" : "outline"}
                   onClick={() => setType("login")}
-                  className="flex-1"
+                  className="flex-1 h-11 rounded-xl"
                 >
                   Login
                 </Button>
@@ -139,36 +141,38 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                   type="button"
                   variant={type === "secure_note" ? "default" : "outline"}
                   onClick={() => setType("secure_note")}
-                  className="flex-1"
+                  className="flex-1 h-11 rounded-xl"
                 >
                   Secure Note
                 </Button>
               </div>
             )}
 
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
+            <div className="space-y-2.5">
+              <Label htmlFor="title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
               />
             </div>
 
             {type === "login" ? (
               <>
-                <div className="grid gap-2">
-                  <Label htmlFor="username">Username / Email</Label>
+                <div className="space-y-2.5">
+                  <Label htmlFor="username" className="text-slate-700 dark:text-slate-300 font-medium">Username / Email</Label>
                   <Input
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
                   />
                 </div>
-                <div className="grid gap-2">
+                <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">Password</Label>
                     <Button
                       type="button"
                       variant="ghost"
@@ -195,7 +199,7 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pr-10"
+                      className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500 pr-10"
                     />
                     <button
                       type="button"
@@ -210,49 +214,55 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                     </button>
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="url">URL</Label>
+                <div className="space-y-2.5">
+                  <Label htmlFor="url" className="text-slate-700 dark:text-slate-300 font-medium">URL</Label>
                   <Input
                     id="url"
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://"
+                    className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
+                <div className="space-y-2.5">
+                  <Label htmlFor="notes" className="text-slate-700 dark:text-slate-300 font-medium">Notes</Label>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
+                    className="rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
                   />
                 </div>
               </>
             ) : (
-              <div className="grid gap-2">
-                <Label htmlFor="content">Secure Content</Label>
+              <div className="space-y-2.5">
+                <Label htmlFor="content" className="text-slate-700 dark:text-slate-300 font-medium">Secure Content</Label>
                 <Textarea
                   id="content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={8}
                   required
+                  className="rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
                 />
               </div>
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="h-11 rounded-xl"
             >
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" className="h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200">
+              Save
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
