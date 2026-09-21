@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: gupt-db
+    environment:
+      POSTGRES_USER: gupt_user
+      POSTGRES_PASSWORD: gupt_password
+      POSTGRES_DB: gupt_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - gupt_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  gupt_db_data:
