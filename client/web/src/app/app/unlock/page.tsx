@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,8 @@ import {
 import { deriveKey, decryptVault, base64ToBuffer } from "@/lib/crypto";
 import { getVault } from "@/lib/auth";
 import { useVaultStore, EncryptedVaultPayload } from "@/lib/store";
+import { ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function UnlockVaultPage() {
   const router = useRouter();
@@ -86,45 +89,85 @@ export default function UnlockVaultPage() {
 
   if (isFetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-900">
-        <p className="text-neutral-500 animate-pulse">Loading vault...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-950">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium animate-pulse">
+            Loading encrypted vault...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Unlock Vault
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your Master Password to decrypt your data
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="masterPassword">Master Password</Label>
-              <Input
-                id="masterPassword"
-                type="password"
-                value={masterPassword}
-                onChange={(e) => setMasterPassword(e.target.value)}
-                required
-                autoFocus
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Decrypting..." : "Unlock"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950 selection:bg-indigo-100 selection:text-indigo-900 p-4 sm:p-8">
+      <div className="w-full max-w-7xl mx-auto">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to home
+        </Link>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <Card className="border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-2xl bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl">
+            <CardHeader className="space-y-2 pb-6 pt-8">
+              <div className="flex items-center justify-center space-x-3 mb-2">
+                <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  Unlock Vault
+                </CardTitle>
+              </div>
+              <CardDescription className="text-center text-slate-500">
+                Enter your Master Password to decrypt your data
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-6 pb-6">
+                <div className="space-y-2.5 px-6">
+                  <div className="flex justify-between items-center">
+                    <Label
+                      htmlFor="masterPassword"
+                      className="text-slate-700 dark:text-slate-300"
+                    >
+                      Master Password
+                    </Label>
+                  </div>
+                  <Input
+                    id="masterPassword"
+                    type="password"
+                    placeholder="Enter your Master Password"
+                    value={masterPassword}
+                    onChange={(e) => setMasterPassword(e.target.value)}
+                    required
+                    className="h-11 rounded-xl bg-white dark:bg-neutral-900 focus-visible:ring-indigo-500"
+                  />
+                </div>
+                {error && (
+                  <p className="text-sm text-red-500 font-medium">{error}</p>
+                )}
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4 pt-2 pb-8 px-8">
+                <Button
+                  className="w-full h-11 mx-6 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Decrypting..." : "Unlock Vault"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }
