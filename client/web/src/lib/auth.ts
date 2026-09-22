@@ -57,3 +57,21 @@ export const updateVault = async (
   const response = await api.put("/api/vault", { version, encryptedData });
   return response.data;
 };
+
+export const forgotPassword = async (
+  email: string,
+): Promise<{ message: string; resetUrl?: string }> => {
+  const response = await api.post("/api/auth/forgot-password", { email });
+  return response.data;
+};
+
+export const resetPassword = async (
+  token: string,
+  password: string,
+): Promise<{ message: string }> => {
+  const response = await api.post("/api/auth/reset-password", {
+    token,
+    password,
+  });
+  return response.data;
+};

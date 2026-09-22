@@ -8,16 +8,27 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  email            String    @unique
+  id               String           @id @default(uuid())
+  email            String           @unique
   passwordHash     String
   currentChallenge String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   sessions         Session[]
   devices          Device[]
   vault            Vault?
   passkeys         Passkey[]
+  passwordResets   PasswordReset[]
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Session {

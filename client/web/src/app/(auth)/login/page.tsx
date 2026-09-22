@@ -123,6 +123,12 @@ export default function LoginPage() {
                     >
                       Password
                     </Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
                   </div>
                   <div className="relative">
                     <Input
