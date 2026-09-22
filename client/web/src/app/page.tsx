@@ -126,7 +126,7 @@ export default function Home() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
-              <a href="https://github.com" target="_blank" rel="noreferrer">
+              <a href="https://github.com/rahul-aggarwal000005/Gupt" target="_blank" rel="noreferrer">
                 <Button
                   variant="outline"
                   size="lg"
