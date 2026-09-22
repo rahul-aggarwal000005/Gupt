@@ -1,8 +1,42 @@
+import { useState } from "react";
+import Image from "next/image";
 import { VaultItem, useVaultStore } from "@/lib/store";
+import { faviconImUrl, hostnameFromUrl } from "@/lib/favicon";
 import { Key, FileText, Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { toast } from "sonner";
+
+function LoginItemIcon({ url }: { url?: string }) {
+  const [failed, setFailed] = useState(false);
+  const hostname = hostnameFromUrl(url);
+  const showFavicon = Boolean(hostname && !failed);
+
+  return (
+    <div
+      className={
+        showFavicon
+          ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
+          : "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/50 text-blue-600 shadow-sm dark:border-blue-900/30 dark:bg-blue-900/10 dark:text-blue-400"
+      }
+    >
+      {showFavicon && hostname ? (
+        <Image
+          src={faviconImUrl(hostname)}
+          alt=""
+          unoptimized
+          width={28}
+          height={28}
+          className="h-7 w-7 object-contain"
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Key className="h-5 w-5" />
+      )}
+    </div>
+  );
+}
 
 interface ItemListProps {
   items: VaultItem[];
@@ -53,15 +87,16 @@ export function ItemList({ items, onEdit }: ItemListProps) {
         >
           {/* Top Row: Icon & Actions */}
           <div className="flex items-start justify-between mb-4">
-            <div
-              className={`p-3 rounded-xl shrink-0 shadow-sm border ${item.type === "login" ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400" : "bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-400"}`}
-            >
-              {item.type === "login" ? (
-                <Key className="w-5 h-5" />
-              ) : (
-                <FileText className="w-5 h-5" />
-              )}
-            </div>
+            {item.type === "login" ? (
+              <LoginItemIcon
+                key={`${item.id}-${hostnameFromUrl(item.url) ?? "no-url"}`}
+                url={item.url}
+              />
+            ) : (
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-100 bg-amber-50/50 text-amber-600 shadow-sm dark:border-amber-900/30 dark:bg-amber-900/10 dark:text-amber-400">
+                <FileText className="h-5 w-5" />
+              </div>
+            )}
 
             <div className="flex items-center space-x-1 focus-within:opacity-100 transition-opacity">
               {item.type === "login" && item.password && (
