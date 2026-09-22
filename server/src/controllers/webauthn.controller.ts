@@ -13,15 +13,15 @@ import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
-// In production, this should be the actual domain (e.g., 'gupt.app')
-const rpID = process.env.NODE_ENV === "production" ? "localhost" : "localhost";
 const expectedOrigin = process.env.APP_URL || "http://localhost:3000";
+// In production, this should be the actual domain (e.g., 'gupt.app')
+const rpID = new URL(expectedOrigin).hostname;
 
 const setTokenCookie = (res: Response, token: string) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
