@@ -31,6 +31,7 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [content, setContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -61,64 +62,74 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const baseData = {
-      title,
-      updatedAt: new Date().toISOString(),
-    };
+    if (isSaving) return;
 
-    if (item) {
-      // Update existing
-      if (type === "login") {
-        await updateItem(item.id, {
-          ...item,
-          ...baseData,
-          type: "login",
-          username,
-          password,
-          url,
-          notes,
-        });
-      } else {
-        await updateItem(item.id, {
-          ...item,
-          ...baseData,
-          type: "secure_note",
-          content,
-        });
-      }
-    } else {
-      // Create new
-      const id = uuidv4();
-      const createdAt = new Date().toISOString();
+    setIsSaving(true);
 
-      if (type === "login") {
-        await addItem({
-          id,
-          createdAt,
-          ...baseData,
-          type: "login",
-          username,
-          password,
-          url,
-          notes,
-        });
+    try {
+      const baseData = {
+        title,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (item) {
+        // Update existing
+        if (type === "login") {
+          await updateItem(item.id, {
+            ...item,
+            ...baseData,
+            type: "login",
+            username,
+            password,
+            url,
+            notes,
+          });
+        } else {
+          await updateItem(item.id, {
+            ...item,
+            ...baseData,
+            type: "secure_note",
+            content,
+          });
+        }
       } else {
-        await addItem({
-          id,
-          createdAt,
-          ...baseData,
-          type: "secure_note",
-          content,
-        });
+        // Create new
+        const id = uuidv4();
+        const createdAt = new Date().toISOString();
+
+        if (type === "login") {
+          await addItem({
+            id,
+            createdAt,
+            ...baseData,
+            type: "login",
+            username,
+            password,
+            url,
+            notes,
+          });
+        } else {
+          await addItem({
+            id,
+            createdAt,
+            ...baseData,
+            type: "secure_note",
+            content,
+          });
+        }
       }
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to save item:", error);
+    } finally {
+      setIsSaving(false);
     }
-
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] rounded-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] p-6 sm:p-8">
+      <DialogContent className="sm:max-w-[500px] rounded-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] p-6 sm:p-8">
         <form onSubmit={handleSubmit}>
           <DialogHeader className="pb-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -149,7 +160,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
             )}
 
             <div className="space-y-2.5">
-              <Label htmlFor="title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
+              <Label
+                htmlFor="title"
+                className="text-slate-700 dark:text-slate-300 font-medium"
+              >
+                Title
+              </Label>
               <Input
                 id="title"
                 value={title}
@@ -162,7 +178,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
             {type === "login" ? (
               <>
                 <div className="space-y-2.5">
-                  <Label htmlFor="username" className="text-slate-700 dark:text-slate-300 font-medium">Username / Email</Label>
+                  <Label
+                    htmlFor="username"
+                    className="text-slate-700 dark:text-slate-300 font-medium"
+                  >
+                    Username / Email
+                  </Label>
                   <Input
                     id="username"
                     value={username}
@@ -172,7 +193,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">Password</Label>
+                    <Label
+                      htmlFor="password"
+                      className="text-slate-700 dark:text-slate-300 font-medium"
+                    >
+                      Password
+                    </Label>
                     <Button
                       type="button"
                       variant="ghost"
@@ -204,7 +230,7 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700 cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -215,7 +241,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                   </div>
                 </div>
                 <div className="space-y-2.5">
-                  <Label htmlFor="url" className="text-slate-700 dark:text-slate-300 font-medium">URL</Label>
+                  <Label
+                    htmlFor="url"
+                    className="text-slate-700 dark:text-slate-300 font-medium"
+                  >
+                    URL
+                  </Label>
                   <Input
                     id="url"
                     type="url"
@@ -226,7 +257,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
                   />
                 </div>
                 <div className="space-y-2.5">
-                  <Label htmlFor="notes" className="text-slate-700 dark:text-slate-300 font-medium">Notes</Label>
+                  <Label
+                    htmlFor="notes"
+                    className="text-slate-700 dark:text-slate-300 font-medium"
+                  >
+                    Notes
+                  </Label>
                   <Textarea
                     id="notes"
                     value={notes}
@@ -238,7 +274,12 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
               </>
             ) : (
               <div className="space-y-2.5">
-                <Label htmlFor="content" className="text-slate-700 dark:text-slate-300 font-medium">Secure Content</Label>
+                <Label
+                  htmlFor="content"
+                  className="text-slate-700 dark:text-slate-300 font-medium"
+                >
+                  Secure Content
+                </Label>
                 <Textarea
                   id="content"
                   value={content}
@@ -260,7 +301,11 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" className="h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200">
+            <Button
+              type="submit"
+              className="h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
+              isLoading={isSaving}
+            >
               Save
             </Button>
           </DialogFooter>
