@@ -1,13 +1,11 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import crypto from "crypto";
 import { signToken } from "../utils/jwt";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { sendPasswordResetEmail } from "../services/email.service";
-
-const prisma = new PrismaClient();
+import { prisma } from "../prisma";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -19,7 +17,7 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-const setTokenCookie = (res: Response, token: string) => {
+export const setTokenCookie = (res: Response, token: string) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -82,6 +80,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    if (!user.passwordHash) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
