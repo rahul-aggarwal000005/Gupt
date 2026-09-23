@@ -1,13 +1,11 @@
+import "./env";
+
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import vaultRoutes from "./routes/vault.routes";
-
-// Load environment variables from the root .env file
-dotenv.config({ path: "../.env" });
 
 const app = express();
 const port = process.env.PORT || 3001;

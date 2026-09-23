@@ -3,6 +3,8 @@ import { api } from "./api";
 export interface User {
   id: string;
   email: string;
+  name?: string | null;
+  avatarUrl?: string | null;
 }
 
 export const register = async (
@@ -73,5 +75,12 @@ export const resetPassword = async (
     token,
     password,
   });
+  return response.data;
+};
+
+export const loginWithGoogle = async (
+  credential: string,
+): Promise<{ user: User; message: string }> => {
+  const response = await api.post("/api/auth/google", { credential });
   return response.data;
 };

@@ -14,7 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { login } from "@/lib/auth";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { login, loginWithGoogle } from "@/lib/auth";
 import { loginWithPasskey } from "@/lib/webauthn";
 import { Fingerprint, Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
@@ -27,6 +28,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isBusy = isLoading || isPasskeyLoading || isGoogleLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +65,25 @@ export default function LoginPage() {
     } finally {
       setIsPasskeyLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setError("");
+    setIsGoogleLoading(true);
+
+    try {
+      await loginWithGoogle(credential);
+      router.push("/app/unlock");
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || "Google sign-in failed");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-in was cancelled or failed");
   };
 
   return (
@@ -157,38 +180,46 @@ export default function LoginPage() {
                   <p className="text-sm text-red-500 font-medium">{error}</p>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col space-y-4 pt-2 pb-8 px-6 sm:px-8">
+              <CardFooter className="flex flex-col gap-3 pt-2 pb-8 px-6 sm:px-8">
                 <Button
                   className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
                   type="submit"
-                  disabled={isLoading || isPasskeyLoading}
+                  disabled={isBusy}
                 >
                   {isLoading ? "Signing in..." : "Sign in"}
                 </Button>
 
-                <div className="relative w-full py-4">
+                <div className="relative w-full py-2">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-slate-200 dark:border-neutral-800" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase font-semibold tracking-wider">
-                    <span className="bg-slate-50 dark:bg-neutral-950 px-2 text-slate-400">
+                    <span className="bg-white dark:bg-neutral-900 px-2 text-slate-400">
                       Or continue with
                     </span>
                   </div>
                 </div>
+
+                <GoogleSignInButton
+                  mode="signin"
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  disabled={isBusy && !isGoogleLoading}
+                  loading={isGoogleLoading}
+                />
 
                 <Button
                   className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-slate-200"
                   variant="outline"
                   type="button"
                   onClick={handlePasskeyLogin}
-                  disabled={isLoading || isPasskeyLoading}
+                  disabled={isBusy}
                 >
                   <Fingerprint className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />
                   {isPasskeyLoading ? "Waiting..." : "Passkey"}
                 </Button>
 
-                <div className="text-sm text-center text-slate-500 mt-4">
+                <div className="text-sm text-center text-slate-500 pt-2">
                   Don&apos;t have an account?{" "}
                   <Link
                     href="/register"

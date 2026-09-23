@@ -1,11 +1,21 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "RESEND_API_KEY is not configured. Password reset emails are disabled.",
+    );
+  }
+  return new Resend(apiKey);
+}
 
 export const sendPasswordResetEmail = async (
   email: string,
   resetUrl: string,
 ) => {
+  const resend = getResendClient();
+
   const { data, error } = await resend.emails.send({
     from: "Gupt <onboarding@resend.dev>",
     to: [email],

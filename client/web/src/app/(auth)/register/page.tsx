@@ -14,7 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { register } from "@/lib/auth";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { register, loginWithGoogle } from "@/lib/auth";
 import { Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -25,6 +26,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isBusy = isLoading || isGoogleLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +46,25 @@ export default function RegisterPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setError("");
+    setIsGoogleLoading(true);
+
+    try {
+      await loginWithGoogle(credential);
+      router.push("/app/unlock");
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || "Google sign-up failed");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-up was cancelled or failed");
   };
 
   return (
@@ -138,10 +161,35 @@ export default function RegisterPage() {
                 <Button
                   className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isBusy}
                 >
                   {isLoading ? "Creating account..." : "Create account"}
                 </Button>
+
+                <div className="relative w-full py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-200 dark:border-neutral-800" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase font-semibold tracking-wider">
+                    <span className="bg-white/70 dark:bg-neutral-900/70 px-2 text-slate-400">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <GoogleSignInButton
+                  mode="signup"
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  disabled={isBusy}
+                />
+
+                {isGoogleLoading && (
+                  <p className="text-sm text-center text-slate-500">
+                    Continuing with Google...
+                  </p>
+                )}
+
                 <div className="text-sm text-center text-slate-500 mt-4">
                   Already have an account?{" "}
                   <Link
