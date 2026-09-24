@@ -292,18 +292,18 @@ export function ItemDialog({ open, onOpenChange, item }: ItemDialogProps) {
             )}
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-4 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 rounded-b-2xl border-t bg-muted/50">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="h-11 rounded-xl"
+              className="h-11 rounded-xl min-w-[4.5rem]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
+              className="h-11 min-w-[4.5rem] rounded-xl font-medium shadow-sm"
               isLoading={isSaving}
             >
               Save

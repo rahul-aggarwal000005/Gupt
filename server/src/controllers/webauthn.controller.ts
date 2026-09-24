@@ -8,6 +8,7 @@ import {
 } from "@simplewebauthn/server";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { signToken } from "../utils/jwt";
+import { passkeyDisplay } from "../utils/passkey-display";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -21,7 +22,7 @@ const setTokenCookie = (res: Response, token: string) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
@@ -55,7 +56,7 @@ export const generateRegistrationOptionsHandler = async (
       })),
       authenticatorSelection: {
         residentKey: "required",
-        userVerification: "preferred",
+        userVerification: "required",
       },
     });
 
@@ -94,6 +95,7 @@ export const verifyRegistrationResponseHandler = async (
       expectedChallenge: dbUser.currentChallenge,
       expectedOrigin,
       expectedRPID: rpID,
+      requireUserVerification: true,
     });
 
     const { verified, registrationInfo } = verification;
@@ -167,7 +169,7 @@ export const generateAuthenticationOptionsHandler = async (
         id: Buffer.from(passkey.credentialID).toString("base64url"),
         type: "public-key",
       })),
-      userVerification: "preferred",
+      userVerification: "required",
     });
 
     // Save challenge to user
@@ -239,6 +241,7 @@ export const verifyAuthenticationResponseHandler = async (
       expectedChallenge: user.currentChallenge,
       expectedOrigin,
       expectedRPID: rpID,
+      requireUserVerification: true,
       credential: {
         id: Buffer.from(passkey.credentialID).toString("base64url"),
         publicKey: new Uint8Array(passkey.credentialPublicKey),
@@ -291,5 +294,124 @@ export const verifyAuthenticationResponseHandler = async (
     res
       .status(400)
       .json({ error: error.message || "Failed to verify authentication" });
+  }
+};
+
+// --- PASSKEY MANAGEMENT ---
+
+export const listPasskeysHandler = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const passkeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const formattedPasskeys = passkeys.map((pk) => {
+      let transports: string[] = [];
+      if (pk.transports) {
+        try {
+          transports = JSON.parse(pk.transports);
+        } catch (err) {
+          console.error(
+            `Failed to parse transports for passkey ${pk.id}:`,
+            err,
+          );
+          transports = [];
+        }
+      }
+
+      const display = passkeyDisplay({
+        transports,
+        credentialBackedUp: pk.credentialBackedUp,
+        credentialDeviceType: pk.credentialDeviceType,
+      });
+
+      return {
+        id: pk.id,
+        kind: display.kind,
+        label: display.label,
+        createdAt: pk.createdAt,
+        credentialBackedUp: pk.credentialBackedUp,
+        credentialDeviceType: pk.credentialDeviceType,
+        transports,
+      };
+    });
+
+    res.status(200).json({ passkeys: formattedPasskeys });
+  } catch (error: any) {
+    console.error("listPasskeys error:", error);
+    res.status(500).json({ error: "Failed to list passkeys" });
+  }
+};
+
+export const deletePasskeyHandler = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id || typeof id !== "string") {
+      res.status(400).json({ error: "Passkey ID is required" });
+      return;
+    }
+
+    const passkey = await prisma.passkey.findUnique({
+      where: { id },
+    });
+
+    if (!passkey) {
+      res.status(404).json({ error: "Passkey not found" });
+      return;
+    }
+
+    if (passkey.userId !== user.id) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    // Lockout guard:
+    // Load user with passwordHash, googleId, and passkey count.
+    // If deleting would leave zero passkeys and user has no passwordHash and no googleId, block with 400.
+    const [dbUser, passkeyCount] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { passwordHash: true, googleId: true },
+      }),
+      prisma.passkey.count({
+        where: { userId: user.id },
+      }),
+    ]);
+
+    if (passkeyCount <= 1 && !dbUser?.passwordHash && !dbUser?.googleId) {
+      res.status(400).json({
+        error:
+          "Add a password or another sign-in method before removing your only passkey.",
+      });
+      return;
+    }
+
+    await prisma.passkey.delete({
+      where: { id },
+    });
+
+    res.status(200).json({ deleted: true });
+  } catch (error: any) {
+    console.error("deletePasskey error:", error);
+    res.status(500).json({ error: "Failed to delete passkey" });
   }
 };

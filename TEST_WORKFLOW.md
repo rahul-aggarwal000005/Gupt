@@ -114,14 +114,22 @@ _Tests that memory is cleared on lock, and that the Master Password can successf
 
 ## 6. WebAuthn / Passkeys (Optional)
 
-_Tests the passwordless login flow._
+_Tests the passwordless login flow, passkey listing, and management._
 
 - [x] Click **Settings** in the top header
+- [x] With zero passkeys registered: Verify "No passkeys registered yet." message is displayed.
 - [x] Click **Register New Passkey**
 - [x] Follow the OS prompt to register (TouchID, FaceID, Windows Hello, etc.)
+- [x] Verify: New passkey appears in the list with calculated server label (e.g. "This device" / "Synced passkey" / "Security key") and registration date.
+- [x] (Optional) Register a second passkey: Verify list displays both passkeys sorted with newest first.
+- [x] Delete passkey verification:
+  - Click the trash icon next to a passkey: A confirmation modal appears.
+  - Confirm delete: Passkey is removed and list refreshes.
+  - Delete lockout guard check: For an account without password and without Google OAuth, deleting the sole remaining passkey is blocked with an error message instructing the user to add another sign-in method first.
 - [x] Click **Lock & Sign Out**
 - [x] Go to the **Login** page
 - [x] Enter your email (`testuser@example.com`)
 - [x] Click the **Passkey** button
 - [x] Follow the OS prompt for biometrics
 - [x] Verify: Successfully logged in and taken to the `/app/unlock` screen (Master Password is still required to decrypt the vault)
+

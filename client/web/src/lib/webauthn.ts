@@ -4,6 +4,19 @@ import {
 } from "@simplewebauthn/browser";
 import { api } from "./api";
 
+const passkeyNotAllowedMessage =
+  "Passkey setup was cancelled or the browser tab lost focus. Try again and keep this tab active.";
+
+function rethrowPasskeyUserError(
+  error: unknown,
+  cancelledMessage: string,
+): never {
+  if (error instanceof Error && error.name === "NotAllowedError") {
+    throw new Error(cancelledMessage);
+  }
+  throw error;
+}
+
 export const registerPasskey = async (): Promise<boolean> => {
   try {
     // 1. Get registration options from the server
@@ -24,7 +37,7 @@ export const registerPasskey = async (): Promise<boolean> => {
     return verificationResp.data?.verified === true;
   } catch (error) {
     console.error("Passkey registration failed:", error);
-    throw error;
+    rethrowPasskeyUserError(error, passkeyNotAllowedMessage);
   }
 };
 
@@ -51,6 +64,43 @@ export const loginWithPasskey = async (email: string): Promise<any> => {
     throw new Error("Verification failed");
   } catch (error) {
     console.error("Passkey login failed:", error);
+    rethrowPasskeyUserError(
+      error,
+      "Passkey sign-in was cancelled or the browser tab lost focus. Try again and keep this tab active.",
+    );
+  }
+};
+
+export type PasskeyKind = "security_key" | "synced" | "this_device";
+
+export interface PasskeySummary {
+  id: string;
+  kind: PasskeyKind;
+  label: string;
+  createdAt: string;
+  credentialBackedUp?: boolean;
+  credentialDeviceType?: string;
+  transports?: string[];
+}
+
+export const listPasskeys = async (): Promise<PasskeySummary[]> => {
+  try {
+    const response = await api.get<{ passkeys: PasskeySummary[] }>(
+      "/api/auth/webauthn/passkeys",
+    );
+    return response.data?.passkeys || [];
+  } catch (error) {
+    console.error("Failed to list passkeys:", error);
+    throw error;
+  }
+};
+
+export const deletePasskey = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/api/auth/webauthn/passkeys/${id}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to delete passkey:", error);
     throw error;
   }
 };

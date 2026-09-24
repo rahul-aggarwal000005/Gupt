@@ -29,7 +29,10 @@ function LoginItemIcon({ url }: { url?: string }) {
           height={28}
           className="h-7 w-7 object-contain"
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => {
+            console.error("Failed to load favicon", hostname);
+            setFailed(true);
+          }}
         />
       ) : (
         <Key className="h-5 w-5" />
