@@ -16,12 +16,14 @@ import {
   Settings,
   Shield,
   Search,
+  Upload,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { exportVault } from "@/lib/export";
 import { toast } from "sonner";
 import { ItemList } from "@/components/vault/ItemList";
 import { ItemDialog } from "@/components/vault/ItemDialog";
+import { ImportBackupDialog } from "@/components/vault/ImportBackupDialog";
 import { SecurityAudit } from "@/components/vault/SecurityAudit";
 import { useAutoLock } from "@/hooks/useAutoLock";
 import { motion } from "framer-motion";
@@ -42,6 +44,8 @@ export default function VaultDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [importOpen, setImportOpen] = useState(false);
 
   // Initialize auto-lock (5 minutes)
   useAutoLock();
@@ -139,6 +143,16 @@ export default function VaultDashboard() {
             )}
           </div>
           <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex rounded-full font-medium shadow-sm hover:bg-slate-100 dark:hover:bg-neutral-800"
+              onClick={() => setImportOpen(true)}
+              title="Import Backup"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -259,6 +273,7 @@ export default function VaultDashboard() {
         onOpenChange={setIsDialogOpen}
         item={selectedItem}
       />
+      <ImportBackupDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

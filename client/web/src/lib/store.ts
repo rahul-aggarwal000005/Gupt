@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import axios from "axios";
 import {
   encryptVault,
   decryptVault,
@@ -63,11 +64,45 @@ interface VaultState {
   lockVault: () => void;
   setServerVersion: (version: number) => void;
 
+  importVaultBackup: (
+    imported: VaultData,
+    mode: "merge" | "replace",
+  ) => Promise<void>;
   addItem: (item: VaultItem) => Promise<void>;
   updateItem: (id: string, item: VaultItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   syncVault: () => Promise<void>;
   fetchAndMerge: () => Promise<void>;
+}
+
+export function mergeVaultByUpdatedAt(
+  localVault: VaultData,
+  incomingVault: VaultData,
+): VaultData {
+  const mergedItemsMap = new Map<string, VaultItem>();
+
+  // Add incoming items to map
+  incomingVault.items.forEach((item) => {
+    mergedItemsMap.set(item.id, item);
+  });
+
+  // Add/overwrite with local items if they are newer
+  localVault.items.forEach((localItem) => {
+    const incomingItem = mergedItemsMap.get(localItem.id);
+    if (!incomingItem) {
+      mergedItemsMap.set(localItem.id, localItem);
+    } else {
+      const localTime = new Date(localItem.updatedAt).getTime();
+      const incomingTime = new Date(incomingItem.updatedAt).getTime();
+      if (localTime > incomingTime) {
+        mergedItemsMap.set(localItem.id, localItem);
+      }
+    }
+  });
+
+  return {
+    items: Array.from(mergedItemsMap.values()),
+  };
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
@@ -129,24 +164,24 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         JSON.stringify(payload),
       );
       set({ serverVersion: response.version });
-    } catch (error: any) {
-      if (error.response?.status === 409) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
         // Conflict detected, trigger merge
         console.warn("Vault version conflict detected. Attempting merge...");
         try {
           await get().fetchAndMerge();
-        } catch (mergeError: any) {
+        } catch (mergeError: unknown) {
           console.error("Merge failed:", mergeError);
           set({ syncError: "Conflict resolution failed. Please reload." });
         }
       } else {
         console.error("Sync error:", error);
-        set({
-          syncError:
-            error.response?.data?.error ||
-            error.message ||
-            "Failed to sync vault",
-        });
+        const errorMessage = axios.isAxiosError(error)
+          ? error.response?.data?.error || error.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to sync vault";
+        set({ syncError: errorMessage });
       }
     } finally {
       set({ isSyncing: false });
@@ -174,38 +209,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const serverVault: VaultData = JSON.parse(serverPlaintext);
 
     // 3. Merge (Last-write-wins per item based on updatedAt)
-    const mergedItemsMap = new Map<string, VaultItem>();
-
-    // Add server items to map
-    serverVault.items.forEach((item) => {
-      mergedItemsMap.set(item.id, item);
-    });
-
-    // Add/overwrite with local items if they are newer
-    localVault.items.forEach((localItem) => {
-      const serverItem = mergedItemsMap.get(localItem.id);
-      if (!serverItem) {
-        // Item exists locally but not on server (newly added locally)
-        mergedItemsMap.set(localItem.id, localItem);
-      } else {
-        // Item exists in both, compare timestamps
-        const localTime = new Date(localItem.updatedAt).getTime();
-        const serverTime = new Date(serverItem.updatedAt).getTime();
-        if (localTime > serverTime) {
-          mergedItemsMap.set(localItem.id, localItem);
-        }
-      }
-    });
-
-    // Note: Deletions are tricky in simple LWW without tombstones.
-    // If an item is deleted locally, it won't be in localVault, so the server item will remain.
-    // For a robust V1, we filter out items that were in the original local state but are now missing (deleted locally).
-    // However, since we don't keep the "base" state, a true 3-way merge is complex.
-    // For this implementation, we accept that concurrent deletes might resurrect items, or we rely on the user to re-delete.
-
-    const mergedVaultData: VaultData = {
-      items: Array.from(mergedItemsMap.values()),
-    };
+    const mergedVaultData = mergeVaultByUpdatedAt(localVault, serverVault);
 
     // 4. Update local state with merged data and new server version
     set({
@@ -214,6 +218,21 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     });
 
     // 5. Re-sync the merged vault
+    await get().syncVault();
+  },
+
+  importVaultBackup: async (imported: VaultData, mode: "merge" | "replace") => {
+    const { vaultData, encryptionKey, serverVersion, salt } = get();
+    if (!vaultData || !encryptionKey || serverVersion === null || !salt) {
+      throw new Error("Vault is locked or missing encryption keys");
+    }
+
+    const nextVaultData =
+      mode === "replace"
+        ? imported
+        : mergeVaultByUpdatedAt(vaultData, imported);
+
+    set({ vaultData: nextVaultData });
     await get().syncVault();
   },
 
