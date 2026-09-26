@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useVaultStore } from "@/lib/store";
 import { useAutoLock } from "@/hooks/useAutoLock";
-import { ItemList } from "@/components/vault/ItemList";
-import { ItemDialog } from "@/components/vault/ItemDialog";
-import { ImportBackupDialog } from "@/components/vault/ImportBackupDialog";
-import { SecurityAudit } from "@/components/vault/SecurityAudit";
-import { VaultHeader } from "./components/VaultHeader";
-import { VaultSidebar } from "./components/VaultSidebar";
-import { VaultToolbar } from "./components/VaultToolbar";
-import { useVaultItems, useVaultActions, useVaultDialogs } from "./hooks";
 import { LoadingOverlay } from "@/components/common";
+import {
+  VaultHeader,
+  VaultSidebar,
+  VaultToolbar,
+  ItemList,
+  ItemDialog,
+  ImportBackupDialog,
+  SecurityAudit,
+} from "./components";
+import { useVaultItems, useVaultActions, useVaultDialogs } from "./hooks";
 
 export function VaultPage() {
   const router = useRouter();
