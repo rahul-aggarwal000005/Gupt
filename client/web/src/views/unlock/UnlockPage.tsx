@@ -1,95 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import {
   AuthCardWrapper,
+  LoadingOverlay,
   PasswordInput,
-  LoadingSpinner,
 } from "@/components/common";
-import { deriveKey, decryptVault, base64ToBuffer } from "@/lib/crypto";
-import { getVault } from "@/lib/auth";
-import { useVaultStore, EncryptedVaultPayload } from "@/lib/store";
+import { useEncryptedVault, useUnlockVault } from "./hooks";
 import { Lock } from "lucide-react";
 
 export function UnlockPage() {
-  const router = useRouter();
   const [masterPassword, setMasterPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
-  const [vaultData, setVaultData] = useState<{
-    version: number;
-    encryptedData: string;
-  } | null>(null);
-  const unlockVault = useVaultStore((state) => state.unlockVault);
-
-  useEffect(() => {
-    const fetchVault = async () => {
-      try {
-        const data = await getVault();
-        if (!data) {
-          // No vault exists, redirect to setup
-          router.push("/app/setup");
-        } else {
-          setVaultData(data);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to fetch vault from server");
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
-    fetchVault();
-  }, [router]);
+  const { vaultData, isFetching } = useEncryptedVault();
+  const { unlock, isUnlocking, error } = useUnlockVault(vaultData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vaultData) return;
-
-    setError("");
-    setIsLoading(true);
-
-    try {
-      const payload: EncryptedVaultPayload = JSON.parse(
-        vaultData.encryptedData,
-      );
-
-      const salt = base64ToBuffer(payload.salt);
-      const iv = base64ToBuffer(payload.iv);
-      const ciphertext = base64ToBuffer(payload.ciphertext);
-
-      // 1. Derive key
-      const key = await deriveKey(masterPassword, salt);
-
-      // 2. Decrypt vault
-      const plaintext = await decryptVault(ciphertext, key, iv);
-      const decryptedData = JSON.parse(plaintext);
-
-      // 3. Store in memory and redirect
-      unlockVault(key, decryptedData, vaultData.version, payload.salt);
-      router.push("/app/vault");
-    } catch (err) {
-      console.error(err);
-      setError("Invalid Master Password");
-    } finally {
-      setIsLoading(false);
-    }
+    await unlock(masterPassword);
   };
 
-  if (isFetching) {
+  const isLoading = isFetching || isUnlocking;
+
+  if (isFetching || !vaultData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-950">
-        <div className="flex flex-col items-center space-y-4">
-          <LoadingSpinner size="lg" />
-          <p className="text-slate-500 font-medium animate-pulse">
-            Loading encrypted vault...
-          </p>
+        <div className="flex flex-col items-center gap-4">
+          <LoadingOverlay message="Loading encrypted vault..." />
         </div>
       </div>
     );
@@ -99,9 +38,11 @@ export function UnlockPage() {
     <AuthCardWrapper
       title="Unlock Vault"
       description="Enter your Master Password to decrypt your data"
-      icon={<Lock className="w-5 h-5" />}
+      icon={<Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       backHref="/"
       backLabel="Back to home"
+      isLoading={isLoading}
+      loadingMessage="Decrypting vault..."
     >
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
@@ -126,13 +67,9 @@ export function UnlockPage() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={isLoading}
+            disabled={isUnlocking}
           >
-            {isLoading ? (
-              <LoadingSpinner size="sm" label="Decrypting..." />
-            ) : (
-              "Unlock Vault"
-            )}
+            Unlock Vault
           </Button>
         </CardFooter>
       </form>
