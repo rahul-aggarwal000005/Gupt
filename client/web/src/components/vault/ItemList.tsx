@@ -6,6 +6,7 @@ import { Key, FileText, Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { toast } from "sonner";
+import { EmptyState } from "@/components/common";
 
 function LoginItemIcon({ url }: { url?: string }) {
   const [failed, setFailed] = useState(false);
@@ -51,9 +52,11 @@ export function ItemList({ items, onEdit }: ItemListProps) {
 
   if (items.length === 0) {
     return (
-      <div className="p-8 text-center text-neutral-500">
-        No items found in this category.
-      </div>
+      <EmptyState
+        title="No items found"
+        description="There are no items matching this category or search query."
+        className="my-6 border-none"
+      />
     );
   }
 
