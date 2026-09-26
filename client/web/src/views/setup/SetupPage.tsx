@@ -1,33 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import {
-  AuthCardWrapper,
-  PasswordInput,
-  LoadingSpinner,
-} from "@/components/common";
-import {
-  deriveKey,
-  encryptVault,
-  generateIV,
-  generateSalt,
-  bufferToBase64,
-} from "@/lib/crypto";
-import { updateVault } from "@/lib/auth";
-import { useVaultStore, EncryptedVaultPayload, VaultData } from "@/lib/store";
+import { AuthCardWrapper, PasswordInput } from "@/components/common";
+import { useSetupVault } from "./hooks";
 import { Key } from "lucide-react";
 
 export function SetupPage() {
-  const router = useRouter();
   const [masterPassword, setMasterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const unlockVault = useVaultStore((state) => state.unlockVault);
+  const { setupVault, isSettingUp, error, setError } = useSetupVault();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,54 +27,18 @@ export function SetupPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      // 1. Generate salt and IV
-      const salt = generateSalt();
-      const iv = generateIV();
-
-      // 2. Derive key
-      const key = await deriveKey(masterPassword, salt);
-
-      // 3. Create initial empty vault
-      const initialVaultData: VaultData = { items: [] };
-      const plaintext = JSON.stringify(initialVaultData);
-
-      // 4. Encrypt vault
-      const ciphertext = await encryptVault(plaintext, key, iv);
-
-      // 5. Construct payload
-      const payload: EncryptedVaultPayload = {
-        algorithm: "AES-256-GCM",
-        kdf: "Argon2id",
-        salt: bufferToBase64(salt),
-        iv: bufferToBase64(iv),
-        ciphertext: bufferToBase64(ciphertext),
-      };
-
-      // 6. Send to server (version 1)
-      const response = await updateVault(1, JSON.stringify(payload));
-
-      // 7. Store in memory and redirect
-      unlockVault(key, initialVaultData, response.version, payload.salt);
-      router.push("/app/vault");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      console.error(err);
-      setError(error.response?.data?.error || "Failed to setup vault");
-    } finally {
-      setIsLoading(false);
-    }
+    await setupVault(masterPassword);
   };
 
   return (
     <AuthCardWrapper
       title="Setup Master Password"
       description="This password encrypts your vault. If you lose it, your data cannot be recovered."
-      icon={<Key className="w-5 h-5" />}
+      icon={<Key className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       backHref="/"
       backLabel="Back to home"
+      isLoading={isSettingUp}
+      loadingMessage="Creating and encrypting vault..."
     >
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
@@ -135,13 +83,9 @@ export function SetupPage() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={isLoading}
+            disabled={isSettingUp}
           >
-            {isLoading ? (
-              <LoadingSpinner size="sm" label="Creating Vault..." />
-            ) : (
-              "Create Vault"
-            )}
+            Create Vault
           </Button>
         </CardFooter>
       </form>
