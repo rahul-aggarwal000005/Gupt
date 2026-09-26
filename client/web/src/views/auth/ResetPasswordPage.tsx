@@ -3,6 +3,7 @@
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
@@ -22,7 +23,6 @@ function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
@@ -34,6 +34,27 @@ function ResetPasswordForm() {
 
     return () => clearTimeout(timer);
   }, [isSuccess, router]);
+
+  const { mutateAsync: performResetPassword, isPending } = useMutation({
+    mutationFn: ({
+      resetToken,
+      newPassword,
+    }: {
+      resetToken: string;
+      newPassword: string;
+    }) => resetPassword(resetToken, newPassword),
+    onMutate: () => setError(""),
+    onSuccess: () => {
+      setIsSuccess(true);
+    },
+    onError: (err: unknown) => {
+      const errorObj = err as { response?: { data?: { error?: string } } };
+      setError(
+        errorObj.response?.data?.error ||
+          "Failed to reset password. The link may be expired.",
+      );
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,20 +75,7 @@ function ResetPasswordForm() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      await resetPassword(token, password);
-      setIsSuccess(true);
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(
-        error.response?.data?.error ||
-          "Failed to reset password. The link may be expired.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    await performResetPassword({ resetToken: token, newPassword: password });
   };
 
   // Invalid or missing token state
@@ -131,6 +139,8 @@ function ResetPasswordForm() {
       description="Enter your new password below"
       backHref="/login"
       backLabel="Back to sign in"
+      isLoading={isPending}
+      loadingMessage="Resetting password..."
     >
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
@@ -175,8 +185,8 @@ function ResetPasswordForm() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={isLoading}
-            isLoading={isLoading}
+            disabled={isPending}
+            isLoading={isPending}
           >
             Reset password
           </Button>
