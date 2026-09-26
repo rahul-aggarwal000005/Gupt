@@ -3,5 +3,5 @@ export * from "./VaultSidebar";
 export * from "./VaultToolbar";
 export * from "./ItemList";
 export * from "./ItemDialog";
-export * from "./ImportBackupDialog";
+export * from "./importBackupDialog/ImportBackupDialog";
 export * from "./SecurityAudit";
