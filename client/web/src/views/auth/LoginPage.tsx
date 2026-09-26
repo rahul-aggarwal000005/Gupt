@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { AuthCardWrapper, PasswordInput } from "@/components/common";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
-import { AuthDivider } from "./components/AuthDivider";
-import { PasskeyButton } from "./components/PasskeyButton";
+import {
+  AuthDivider,
+  PasskeyButton,
+  GoogleSignInButton,
+} from "./components";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");

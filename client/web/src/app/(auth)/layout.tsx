@@ -1,4 +1,4 @@
-import { GoogleAuthProvider } from "@/components/auth/google-oauth-provider";
+import { GoogleAuthProvider } from "@/providers/google-auth-provider";
 
 export default function AuthLayout({
   children,
