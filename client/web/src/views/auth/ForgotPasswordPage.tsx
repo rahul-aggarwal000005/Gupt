@@ -1,63 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { AuthCardWrapper, LoadingSpinner } from "@/components/common";
+import { AuthCardWrapper } from "@/components/common";
 import { forgotPassword } from "@/lib/auth";
-import { KeyRound, Mail, CheckCircle2 } from "lucide-react";
+import { KeyRound, Mail, CheckCircle2, Loader2 } from "lucide-react";
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [resetUrl, setResetUrl] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      const result = await forgotPassword(email);
-      setIsSubmitted(true);
-      // In development, the server returns the reset URL for easy testing
+  const { mutateAsync: sendResetLink, isPending } = useMutation({
+    mutationFn: (emailAddress: string) => forgotPassword(emailAddress),
+    onMutate: () => setError(""),
+    onSuccess: (result) => {
       if (result.resetUrl) {
         setResetUrl(result.resetUrl);
       }
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
+    },
+    onError: (err: unknown) => {
+      const errorObj = err as { response?: { data?: { error?: string } } };
       setError(
-        error.response?.data?.error || "An error occurred. Please try again.",
+        errorObj.response?.data?.error ||
+          "An error occurred. Please try again.",
       );
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendResetLink(email);
   };
+
+  const { title, description, icon } = useMemo(() => {
+    if (resetUrl) {
+      return {
+        title: "Check your email",
+        description:
+          "If an account exists with that email, we've sent a password reset link.",
+        icon: (
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        ),
+      };
+    }
+
+    return {
+      title: "Forgot password?",
+      description:
+        "Enter your email and we'll send you a link to reset your password.",
+      icon: <KeyRound className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+    };
+  }, [resetUrl]);
 
   return (
     <AuthCardWrapper
-      title={isSubmitted ? "Check your email" : "Forgot password?"}
-      description={
-        isSubmitted
-          ? "If an account exists with that email, we've sent a password reset link."
-          : "Enter your email and we'll send you a link to reset your password."
-      }
-      icon={
-        isSubmitted ? (
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-        ) : (
-          <KeyRound className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-        )
-      }
+      title={title}
+      description={description}
+      icon={icon}
       backHref="/login"
       backLabel="Back to sign in"
+      isLoading={isPending}
+      loadingMessage="Sending reset link..."
     >
-      {!isSubmitted ? (
+      {!resetUrl ? (
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
             <div className="space-y-2.5">
@@ -85,16 +96,10 @@ export function ForgotPasswordPage() {
             <Button
               className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
             >
-              {isLoading ? (
-                <LoadingSpinner size="sm" label="Sending..." />
-              ) : (
-                <>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send reset link
-                </>
-              )}
+              <Mail className="w-4 h-4 mr-2" />
+              Send reset link
             </Button>
             <div className="text-sm text-center text-slate-500 mt-4">
               Remember your password?{" "}
@@ -111,8 +116,8 @@ export function ForgotPasswordPage() {
         <CardContent className="space-y-6 pb-8 px-6 sm:px-8">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4">
             <p className="text-sm text-emerald-700 dark:text-emerald-300">
-              A password reset link has been generated. Check the server
-              console for the link or your email inbox.
+              A password reset link has been generated. Check the server console
+              for the link or your email inbox.
             </p>
           </div>
 
