@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { useVaultStore, VaultItem } from "@/lib/store";
-import { logout } from "@/lib/auth";
-import { exportVault } from "@/lib/export";
+import { useVaultStore } from "@/lib/store";
 import { useAutoLock } from "@/hooks/useAutoLock";
 import { ItemList } from "@/components/vault/ItemList";
 import { ItemDialog } from "@/components/vault/ItemDialog";
@@ -15,81 +12,58 @@ import { SecurityAudit } from "@/components/vault/SecurityAudit";
 import { VaultHeader } from "./components/VaultHeader";
 import { VaultSidebar } from "./components/VaultSidebar";
 import { VaultToolbar } from "./components/VaultToolbar";
+import { useVaultItems, useVaultActions, useVaultDialogs } from "./hooks";
+import { LoadingOverlay } from "@/components/common";
 
 export function VaultPage() {
   const router = useRouter();
-  const {
-    isUnlocked,
-    vaultData,
-    lockVault,
-    isSyncing,
-    syncError,
-    syncVault,
-    encryptionKey,
-    salt,
-  } = useVaultStore();
-
-  const [activeTab, setActiveTab] = useState("all");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [importOpen, setImportOpen] = useState(false);
+  const { isUnlocked, vaultData, isSyncing, syncError, syncVault } =
+    useVaultStore();
 
   // Initialize auto-lock (5 minutes)
   useAutoLock();
+  const { handleLock, handleExport, isLocking } = useVaultActions();
 
   useEffect(() => {
-    if (!isUnlocked) {
-      router.push("/app/unlock");
-    }
-  }, [isUnlocked, router]);
-
-  const handleExport = async () => {
-    if (!vaultData || !encryptionKey || !salt) {
-      toast.error("Cannot export: Vault is locked or missing data");
+    if (isLocking) {
       return;
     }
-    try {
-      await exportVault(vaultData, encryptionKey, salt);
-      toast.success("Vault backup exported successfully");
-    } catch {
-      toast.error("Failed to export vault backup");
+
+    if (!isUnlocked) {
+      router.replace("/app/unlock");
     }
-  };
+  }, [isUnlocked, router, isLocking]);
+
+  const {
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    filteredItems,
+    counts,
+  } = useVaultItems(vaultData);
+
+  const {
+    isDialogOpen,
+    setIsDialogOpen,
+    selectedItem,
+    importOpen,
+    setImportOpen,
+    openCreateDialog,
+    openEditDialog,
+  } = useVaultDialogs();
+
+  if (isLocking) {
+    return (
+      <div className="min-h-screen relative flex items-center justify-center bg-slate-50 dark:bg-neutral-950">
+        <LoadingOverlay message="Locking vault and signing out..." />
+      </div>
+    );
+  }
 
   if (!isUnlocked || !vaultData) {
     return null; // Will redirect to /app/unlock
   }
-
-  const handleLock = async () => {
-    lockVault();
-    await logout();
-    router.push("/");
-  };
-
-  const handleCreateNew = () => {
-    setSelectedItem(null);
-    setIsDialogOpen(true);
-  };
-
-  const handleEditItem = (item: VaultItem) => {
-    setSelectedItem(item);
-    setIsDialogOpen(true);
-  };
-
-  const items = vaultData.items || [];
-  const logins = items.filter((item) => item.type === "login");
-  const notes = items.filter((item) => item.type === "secure_note");
-
-  const filterItems = (itemList: VaultItem[]) => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return itemList;
-    return itemList.filter((item) => item.title?.toLowerCase().includes(query));
-  };
-
-  const currentTabItems =
-    activeTab === "all" ? items : activeTab === "logins" ? logins : notes;
-  const filteredItems = filterItems(currentTabItems);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-neutral-950 selection:bg-indigo-100 selection:text-indigo-900">
@@ -106,9 +80,9 @@ export function VaultPage() {
         <VaultSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          totalCount={items.length}
-          loginCount={logins.length}
-          noteCount={notes.length}
+          totalCount={counts.total}
+          loginCount={counts.logins}
+          noteCount={counts.notes}
         />
 
         <motion.div
@@ -123,11 +97,11 @@ export function VaultPage() {
             title={activeTab}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onCreateNew={handleCreateNew}
+            onCreateNew={openCreateDialog}
           />
 
           <div className="bg-transparent border-none shadow-none pt-2">
-            <ItemList items={filteredItems} onEdit={handleEditItem} />
+            <ItemList items={filteredItems} onEdit={openEditDialog} />
           </div>
         </motion.div>
       </main>
