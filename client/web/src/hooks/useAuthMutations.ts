@@ -69,7 +69,7 @@ export function useAuthMutations() {
     );
   }, [handleError]);
 
-  const disabled =
+  const isAuthenticating =
     emailLoginMutation.isPending ||
     passkeyLoginMutation.isPending ||
     googleLoginMutation.isPending;
@@ -85,7 +85,7 @@ export function useAuthMutations() {
     isGoogleLoggingIn: googleLoginMutation.isPending,
     onGoogleError: handleGoogleError,
 
-    disabled,
+    isAuthenticating,
     error,
     setError,
   };

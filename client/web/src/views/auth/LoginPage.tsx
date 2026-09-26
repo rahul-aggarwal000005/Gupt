@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ export function LoginPage() {
     onGoogleError,
     isEmailLoggingIn,
     isPasskeyLoggingIn,
-    disabled,
+    isAuthenticating,
     error,
   } = useAuthMutations();
 
@@ -36,12 +36,26 @@ export function LoginPage() {
     await loginWithPasskey(email);
   };
 
+  const loadingMessage = useMemo(() => {
+    if (isPasskeyLoggingIn) {
+      return "Verifying passkey...";
+    }
+
+    if (isEmailLoggingIn) {
+      return "Signing in...";
+    }
+
+    return "Authenticating with Google...";
+  }, [isPasskeyLoggingIn, isEmailLoggingIn]);
+
   return (
     <AuthCardWrapper
       title="Welcome back"
       description="Enter your details to sign in to your vault"
       backHref="/"
       backLabel="Back to home"
+      isLoading={isAuthenticating}
+      loadingMessage={loadingMessage}
     >
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
@@ -91,7 +105,7 @@ export function LoginPage() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={disabled}
+            disabled={isAuthenticating}
             isLoading={isEmailLoggingIn}
           >
             Sign in
@@ -103,13 +117,13 @@ export function LoginPage() {
             <GoogleSignInButton
               onSuccess={loginWithGoogle}
               onError={onGoogleError}
-              disabled={disabled}
+              disabled={isAuthenticating}
             />
 
             <PasskeyButton
               onClick={handlePasskeyLogin}
               isLoading={isPasskeyLoggingIn}
-              disabled={disabled}
+              disabled={isAuthenticating}
             />
           </div>
 

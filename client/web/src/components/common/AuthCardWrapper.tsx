@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { LoadingOverlay } from "./LoadingOverlay";
 
 export interface AuthCardWrapperProps {
   title: string;
@@ -20,6 +21,8 @@ export interface AuthCardWrapperProps {
   backLabel?: string;
   maxWidth?: string;
   className?: string;
+  isLoading?: boolean;
+  loadingMessage?: string;
   children: React.ReactNode;
 }
 
@@ -31,6 +34,8 @@ export function AuthCardWrapper({
   backLabel = "Back to home",
   maxWidth = "max-w-md",
   className,
+  isLoading = false,
+  loadingMessage,
   children,
 }: AuthCardWrapperProps) {
   return (
@@ -54,7 +59,10 @@ export function AuthCardWrapper({
           transition={{ duration: 0.5 }}
           className={cn("w-full", maxWidth, className)}
         >
-          <Card className="border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-2xl bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl">
+          <Card className="relative overflow-hidden border-slate-200/50 dark:border-neutral-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-2xl bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl">
+            {isLoading && (
+              <LoadingOverlay message={loadingMessage} />
+            )}
             <CardHeader className="space-y-2 pb-6 pt-8 px-6 sm:px-8">
               <div className="flex items-center justify-center space-x-3 mb-2">
                 <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
