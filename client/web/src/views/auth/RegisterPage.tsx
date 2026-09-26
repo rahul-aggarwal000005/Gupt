@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,53 +8,30 @@ import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { AuthCardWrapper, PasswordInput } from "@/components/common";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { register, loginWithGoogle } from "@/lib/auth";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 import { AuthDivider } from "./components/AuthDivider";
 
 export function RegisterPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const isBusy = isLoading || isGoogleLoading;
+  const {
+    registerWithEmail,
+    loginWithGoogle,
+    onGoogleError,
+    isRegistering,
+    isAuthenticating,
+    error,
+  } = useAuthMutations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await register(email, password);
-      router.push("/app/setup");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
+    await registerWithEmail({ email, password });
   };
 
-  const handleGoogleSuccess = async (credential: string) => {
-    setError("");
-    setIsGoogleLoading(true);
-
-    try {
-      await loginWithGoogle(credential);
-      router.push("/app/unlock");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Google sign-up failed");
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign-up was cancelled or failed");
-  };
+  const loadingMessage = isRegistering
+    ? "Creating your account..."
+    : "Authenticating with Google...";
 
   return (
     <AuthCardWrapper
@@ -63,6 +39,8 @@ export function RegisterPage() {
       description="Sign up to start securing your passwords"
       backHref="/"
       backLabel="Back to home"
+      isLoading={isAuthenticating}
+      loadingMessage={loadingMessage}
     >
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pb-6 px-6 sm:px-8">
@@ -108,8 +86,8 @@ export function RegisterPage() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={isBusy}
-            isLoading={isLoading}
+            disabled={isAuthenticating}
+            isLoading={isRegistering}
           >
             Create account
           </Button>
@@ -117,9 +95,9 @@ export function RegisterPage() {
           <AuthDivider />
 
           <GoogleSignInButton
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            disabled={isBusy}
+            onSuccess={loginWithGoogle}
+            onError={onGoogleError}
+            disabled={isAuthenticating}
             mode="signup"
           />
 

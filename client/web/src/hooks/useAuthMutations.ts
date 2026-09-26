@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { login, loginWithGoogle, User } from "@/lib/auth";
+import { login, register, loginWithGoogle, User } from "@/lib/auth";
 import { loginWithPasskey } from "@/lib/webauthn";
 import { USER_QUERY_KEY } from "./useCurrentUser";
 
@@ -22,10 +22,10 @@ export function useAuthMutations() {
   const [error, setError] = useState<string>("");
 
   const handleSuccess = useCallback(
-    (user: User) => {
+    (user: User, redirectPath: string = "/app/unlock") => {
       setError("");
       queryClient.setQueryData(USER_QUERY_KEY, user);
-      router.replace("/app/unlock");
+      router.replace(redirectPath);
     },
     [queryClient, router],
   );
@@ -39,8 +39,16 @@ export function useAuthMutations() {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       login(email, password),
     onMutate: () => setError(""),
-    onSuccess: (data) => handleSuccess(data.user),
+    onSuccess: (data) => handleSuccess(data.user, "/app/unlock"),
     onError: (err) => handleError(err, "Invalid email or password"),
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      register(email, password),
+    onMutate: () => setError(""),
+    onSuccess: (data) => handleSuccess(data.user, "/app/setup"),
+    onError: (err) => handleError(err, "Registration failed"),
   });
 
   const passkeyLoginMutation = useMutation({
@@ -51,14 +59,14 @@ export function useAuthMutations() {
       return loginWithPasskey(email.trim());
     },
     onMutate: () => setError(""),
-    onSuccess: (data) => handleSuccess(data.user),
+    onSuccess: (data) => handleSuccess(data.user, "/app/unlock"),
     onError: (err) => handleError(err, "Passkey login failed"),
   });
 
   const googleLoginMutation = useMutation({
     mutationFn: (credential: string) => loginWithGoogle(credential),
     onMutate: () => setError(""),
-    onSuccess: (data) => handleSuccess(data.user),
+    onSuccess: (data) => handleSuccess(data.user, "/app/unlock"),
     onError: (err) => handleError(err, "Google sign-in failed"),
   });
 
@@ -71,12 +79,16 @@ export function useAuthMutations() {
 
   const isAuthenticating =
     emailLoginMutation.isPending ||
+    registerMutation.isPending ||
     passkeyLoginMutation.isPending ||
     googleLoginMutation.isPending;
 
   return {
     loginWithEmail: emailLoginMutation.mutateAsync,
     isEmailLoggingIn: emailLoginMutation.isPending,
+
+    registerWithEmail: registerMutation.mutateAsync,
+    isRegistering: registerMutation.isPending,
 
     loginWithPasskey: passkeyLoginMutation.mutateAsync,
     isPasskeyLoggingIn: passkeyLoginMutation.isPending,
