@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,74 +8,32 @@ import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { AuthCardWrapper, PasswordInput } from "@/components/common";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { login, loginWithGoogle } from "@/lib/auth";
-import { loginWithPasskey } from "@/lib/webauthn";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 import { AuthDivider } from "./components/AuthDivider";
 import { PasskeyButton } from "./components/PasskeyButton";
 
 export function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const isBusy = isLoading || isPasskeyLoading || isGoogleLoading;
+  const {
+    loginWithEmail,
+    loginWithPasskey,
+    loginWithGoogle,
+    onGoogleError,
+    isEmailLoggingIn,
+    isPasskeyLoggingIn,
+    disabled,
+    error,
+  } = useAuthMutations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await login(email, password);
-      router.push("/app/unlock");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Invalid email or password");
-    } finally {
-      setIsLoading(false);
-    }
+    await loginWithEmail({ email, password });
   };
 
   const handlePasskeyLogin = async () => {
-    if (!email) {
-      setError("Please enter your email first to use a passkey.");
-      return;
-    }
-    setError("");
-    setIsPasskeyLoading(true);
-
-    try {
-      await loginWithPasskey(email);
-      router.push("/app/unlock");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Passkey login failed");
-    } finally {
-      setIsPasskeyLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credential: string) => {
-    setError("");
-    setIsGoogleLoading(true);
-
-    try {
-      await loginWithGoogle(credential);
-      router.push("/app/unlock");
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Google sign-in failed");
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign-in was cancelled or failed");
+    await loginWithPasskey(email);
   };
 
   return (
@@ -134,8 +91,8 @@ export function LoginPage() {
           <Button
             className="w-full h-11 rounded-xl font-medium shadow-sm hover:scale-[1.02] transition-transform duration-200"
             type="submit"
-            disabled={isBusy}
-            isLoading={isLoading}
+            disabled={disabled}
+            isLoading={isEmailLoggingIn}
           >
             Sign in
           </Button>
@@ -144,15 +101,15 @@ export function LoginPage() {
 
           <div className="w-full space-y-3">
             <GoogleSignInButton
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              disabled={isBusy}
+              onSuccess={loginWithGoogle}
+              onError={onGoogleError}
+              disabled={disabled}
             />
 
             <PasskeyButton
               onClick={handlePasskeyLogin}
-              isLoading={isPasskeyLoading}
-              disabled={isBusy}
+              isLoading={isPasskeyLoggingIn}
+              disabled={disabled}
             />
           </div>
 
