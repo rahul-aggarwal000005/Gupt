@@ -1,32 +1,50 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-export function useClipboardCopy() {
-  const copyToClipboard = useCallback(async (text: string, label: string = "Password") => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`${label} copied`, {
-        description: "Clipboard will clear in 30 seconds for security",
-      });
+const CLIPBOARD_CLEAR_DELAY = 30_000;
 
-      // Clear clipboard after 30 seconds
-      setTimeout(async () => {
-        try {
-          const currentClipboard = await navigator.clipboard.readText();
-          if (currentClipboard === text) {
+export function useClipboardCopy() {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const copyToClipboard = useCallback(
+    async (text: string, label = "Password") => {
+      try {
+        await navigator.clipboard.writeText(text);
+
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+
+        toast.success(`${label} copied`, {
+          description: "Clipboard will clear in 30 seconds for security",
+        });
+
+        timeoutRef.current = setTimeout(async () => {
+          try {
             await navigator.clipboard.writeText("");
             toast.info("Clipboard cleared for security");
+          } catch {
+            // Clipboard may be unavailable.
+          } finally {
+            timeoutRef.current = null;
           }
-        } catch {
-          // Clipboard read may fail if browser tab loses focus, which is expected
-        }
-      }, 30000);
-    } catch {
-      toast.error(`Failed to copy ${label.toLowerCase()}`);
-    }
-  }, []);
+        }, CLIPBOARD_CLEAR_DELAY);
+      } catch {
+        toast.error(`Failed to copy ${label.toLowerCase()}`);
+      }
+    },
+    [],
+  );
 
   return { copyToClipboard };
 }
