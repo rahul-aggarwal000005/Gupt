@@ -20,8 +20,13 @@ export function useVaultItems(vaultData: VaultData | null) {
   );
 
   const filteredItems = useMemo(() => {
-    const currentTabItems =
-      activeTab === "all" ? items : activeTab === "logins" ? logins : notes;
+    let currentTabItems = items;
+
+    if (activeTab === "logins") {
+      currentTabItems = logins;
+    } else if (activeTab === "notes") {
+      currentTabItems = notes;
+    }
 
     const query = searchQuery.trim().toLowerCase();
     if (!query) return currentTabItems;
