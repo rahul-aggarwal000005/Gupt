@@ -7,11 +7,17 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import vaultRoutes from "./routes/vault.routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import { generalRateLimiter } from "./middleware/rate-limiter.middleware";
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Global Middleware
+// Trust reverse proxy in production (e.g. AWS ALB, Render, Cloudflare, Nginx)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Global Security & Parsing Middleware
 app.use(helmet());
 app.use(
   cors({
@@ -21,6 +27,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(generalRateLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);

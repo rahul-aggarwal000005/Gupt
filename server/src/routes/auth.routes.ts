@@ -17,16 +17,25 @@ import {
   deletePasskeyHandler,
 } from "../controllers/webauthn.controller";
 import { authenticate } from "../middleware/auth.middleware";
+import {
+  authRateLimiter,
+  passwordResetRateLimiter,
+} from "../middleware/rate-limiter.middleware";
 
 const router = Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/google", googleLogin);
+// Public Credential & OAuth Routes (Protected by Auth Rate Limiter)
+router.post("/register", authRateLimiter, register);
+router.post("/login", authRateLimiter, login);
+router.post("/google", authRateLimiter, googleLogin);
+
+// Protected Session Routes
 router.post("/logout", authenticate, logout);
 router.get("/me", authenticate, getMe);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+
+// Password Reset Routes (Strictly Rate-Limited)
+router.post("/forgot-password", passwordResetRateLimiter, forgotPassword);
+router.post("/reset-password", authRateLimiter, resetPassword);
 
 // WebAuthn routes
 router.get(
@@ -41,9 +50,14 @@ router.post(
 );
 router.get(
   "/webauthn/login/generate-options",
+  authRateLimiter,
   generateAuthenticationOptionsHandler,
 );
-router.post("/webauthn/login/verify", verifyAuthenticationResponseHandler);
+router.post(
+  "/webauthn/login/verify",
+  authRateLimiter,
+  verifyAuthenticationResponseHandler,
+);
 router.get("/webauthn/passkeys", authenticate, listPasskeysHandler);
 router.delete("/webauthn/passkeys/:id", authenticate, deletePasskeyHandler);
 
