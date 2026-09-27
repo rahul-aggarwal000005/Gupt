@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { VaultData, VaultItem } from "@/lib/store";
+import { VaultData } from "@/lib/store";
 
 export type VaultTab = "all" | "logins" | "notes";
 

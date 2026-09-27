@@ -44,7 +44,7 @@ export async function readAndDecryptBackupFile(
     const iv = base64ToBuffer(payload.iv);
     const ciphertext = base64ToBuffer(payload.ciphertext);
     plaintext = await decryptVault(ciphertext, encryptionKey, iv);
-  } catch (err) {
+  } catch {
     throw new Error(
       "Failed to decrypt backup. Ensure the backup was made with the same master password.",
     );

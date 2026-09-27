@@ -9,8 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/common";
-import { Fingerprint } from "lucide-react";
 import { PasskeySummary } from "@/lib/webauthn";
 import { usePasskeys } from "../hooks/usePasskeys";
 import { PasskeyList } from "./PasskeyList";

@@ -31,7 +31,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const response = await api.get("/api/auth/me");
     return response.data.user;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
