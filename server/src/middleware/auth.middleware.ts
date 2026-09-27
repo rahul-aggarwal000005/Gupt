@@ -1,8 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Request, Response, NextFunction } from "express";
+import { verifyToken } from "../utils/jwt";
+import { prisma } from "../prisma";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -12,19 +10,23 @@ export interface AuthRequest extends Request {
   sessionId?: string;
 }
 
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const token = req.cookies.token;
 
     if (!token) {
-      res.status(401).json({ error: 'Unauthorized: No token provided' });
+      res.status(401).json({ error: "Unauthorized: No token provided" });
       return;
     }
 
     const decoded = verifyToken(token);
 
     if (!decoded) {
-      res.status(401).json({ error: 'Unauthorized: Invalid token' });
+      res.status(401).json({ error: "Unauthorized: Invalid token" });
       return;
     }
 
@@ -35,7 +37,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     });
 
     if (!session || session.expiresAt < new Date()) {
-      res.status(401).json({ error: 'Unauthorized: Session expired or invalid' });
+      res
+        .status(401)
+        .json({ error: "Unauthorized: Session expired or invalid" });
       return;
     }
 
@@ -47,7 +51,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(500).json({ error: 'Internal server error during authentication' });
+    console.error("Auth middleware error:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error during authentication" });
   }
 };

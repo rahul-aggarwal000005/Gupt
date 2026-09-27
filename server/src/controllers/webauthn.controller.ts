@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -11,8 +10,7 @@ import { signToken } from "../utils/jwt";
 import { passkeyDisplay } from "../utils/passkey-display";
 import { z } from "zod";
 import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import { prisma } from "../prisma";
 
 const expectedOrigin = process.env.APP_URL || "http://localhost:3000";
 // In production, this should be the actual domain (e.g., 'gupt.app')
