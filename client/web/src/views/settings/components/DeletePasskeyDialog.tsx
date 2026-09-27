@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LoadingSpinner } from "@/components/common";
 import { PasskeySummary } from "@/lib/webauthn";
 
 export interface DeletePasskeyDialogProps {
@@ -48,23 +47,16 @@ export function DeletePasskeyDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isDeleting}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
             disabled={isDeleting}
+            isLoading={isDeleting}
           >
-            {isDeleting ? (
-              <LoadingSpinner size="sm" label="Removing..." />
-            ) : (
-              "Remove Passkey"
-            )}
+            {isDeleting ? "Removing..." : "Remove Passkey"}
           </Button>
         </DialogFooter>
       </DialogContent>

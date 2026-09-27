@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { AuthCardWrapper } from "@/components/common";
 import { forgotPassword } from "@/lib/auth";
-import { KeyRound, Mail, CheckCircle2, Loader2 } from "lucide-react";
+import { KeyRound, Mail, CheckCircle2 } from "lucide-react";
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

@@ -3,17 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common";
-import {
-  PasskeySummary,
-  PasskeyKind,
-} from "@/lib/webauthn";
-import {
-  Fingerprint,
-  Key,
-  Cloud,
-  Smartphone,
-  Trash2,
-} from "lucide-react";
+import { PasskeySummary, PasskeyKind } from "@/lib/webauthn";
+import { Fingerprint, Key, Cloud, Smartphone, Trash2 } from "lucide-react";
 
 export interface PasskeyListProps {
   passkeys: PasskeySummary[];
