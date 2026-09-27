@@ -3,6 +3,7 @@ import {
   startAuthentication,
 } from "@simplewebauthn/browser";
 import { api } from "./api";
+import { User } from "./auth";
 
 const passkeyNotAllowedMessage =
   "Passkey setup was cancelled or the browser tab lost focus. Try again and keep this tab active.";
@@ -41,7 +42,9 @@ export const registerPasskey = async (): Promise<boolean> => {
   }
 };
 
-export const loginWithPasskey = async (email: string): Promise<any> => {
+export const loginWithPasskey = async (
+  email: string,
+): Promise<{ user: User }> => {
   try {
     // 1. Get authentication options from the server
     const optionsResp = await api.get(
@@ -59,7 +62,7 @@ export const loginWithPasskey = async (email: string): Promise<any> => {
     });
 
     if (verificationResp.data?.verified) {
-      return verificationResp.data.user;
+      return { user: verificationResp.data.user as User };
     }
     throw new Error("Verification failed");
   } catch (error) {
