@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { UnlockPage } from "@/views/unlock";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <UnlockPage />;
+  return (
+    <Suspense fallback={null}>
+      <UnlockPage />
+    </Suspense>
+  );
 }

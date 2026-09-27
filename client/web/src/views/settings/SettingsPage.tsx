@@ -13,7 +13,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!isUnlocked) {
-      router.push("/app/unlock");
+      router.push("/app/unlock?redirect=/app/settings");
     }
   }, [isUnlocked, router]);
 

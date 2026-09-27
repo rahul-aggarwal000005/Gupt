@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { deriveKey, decryptVault, base64ToBuffer } from "@/lib/crypto";
 import { useVaultStore, EncryptedVaultPayload } from "@/lib/store";
 
@@ -15,6 +15,8 @@ export function useUnlockVault(
   vaultData: EncryptedVaultData | null | undefined,
 ) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get("redirect") || "/app/vault";
   const [error, setError] = useState<string>("");
   const unlockVault = useVaultStore((state) => state.unlockVault);
 
@@ -52,7 +54,13 @@ export function useUnlockVault(
       setError("");
     },
     onSuccess: () => {
-      router.replace("/app/vault");
+      let destination = "/app/vault";
+
+      if (redirectTarget.startsWith("/") && !redirectTarget.startsWith("//")) {
+        destination = redirectTarget;
+      }
+
+      router.replace(destination);
     },
     onError: (err: unknown) => {
       console.error("Unlock error:", err);
