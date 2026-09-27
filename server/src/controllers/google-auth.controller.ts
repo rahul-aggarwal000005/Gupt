@@ -1,16 +1,18 @@
-import { Request, Response } from "express";
-import { OAuth2Client } from "google-auth-library";
+import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 
 import { prisma } from "../prisma";
 import { signToken } from "../utils/jwt";
 import { setTokenCookie } from "./auth.controller";
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+import {
+  verifyGoogleToken,
+  findOrCreateGoogleUser,
+} from "../services/google-auth.service";
 
 export const googleLogin = async (
   req: Request,
   res: Response,
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { credential } = req.body;
@@ -19,94 +21,17 @@ export const googleLogin = async (
       res.status(400).json({
         error: "Google credential is required",
       });
-
       return;
     }
 
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      console.error("GOOGLE_CLIENT_ID is not configured");
+    // 1. Verify the Google ID token and extract user profile claims
+    const profile = await verifyGoogleToken(credential);
 
-      res.status(500).json({
-        error: "Google authentication is not configured",
-      });
+    // 2. Find, link, or provision user in DB
+    const user = await findOrCreateGoogleUser(profile);
 
-      return;
-    }
-
-    // Verify the Google ID token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-
-    if (!payload) {
-      res.status(401).json({
-        error: "Invalid Google credential",
-      });
-
-      return;
-    }
-
-    const { sub: googleId, email, email_verified, name, picture } = payload;
-
-    if (!googleId || !email || !email_verified) {
-      res.status(401).json({
-        error: "Google account email is not verified",
-      });
-
-      return;
-    }
-
-    // 1. Find existing Google account
-    let user = await prisma.user.findUnique({
-      where: {
-        googleId,
-      },
-    });
-
-    // 2. If Google account doesn't exist,
-    // check whether this email already belongs
-    // to an existing Gupt account.
-    if (!user) {
-      user = await prisma.user.findUnique({
-        where: {
-          email,
-        },
-      });
-
-      // Link Google to existing account
-      if (user) {
-        user = await prisma.user.update({
-          where: {
-            id: user.id,
-          },
-          data: {
-            googleId,
-            name: user.name ?? name,
-            avatarUrl: user.avatarUrl ?? picture,
-          },
-        });
-      }
-    }
-
-    // 3. Create a new Gupt account
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          googleId,
-          passwordHash: null,
-          name,
-          avatarUrl: picture,
-        },
-      });
-    }
-
-    // 4. Create Gupt session
+    // 3. Create session (7 days validity)
     const expiresAt = new Date();
-
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     const session = await prisma.session.create({
@@ -117,13 +42,12 @@ export const googleLogin = async (
       },
     });
 
-    // 5. Create Gupt JWT
+    // 4. Create and set auth token cookie
     const token = signToken({
       userId: user.id,
       sessionId: session.id,
     });
 
-    // 6. Use the same authentication cookie
     setTokenCookie(res, token);
 
     res.status(200).json({
@@ -136,10 +60,6 @@ export const googleLogin = async (
       },
     });
   } catch (error) {
-    console.error("Google login error:", error);
-
-    res.status(401).json({
-      error: "Google authentication failed",
-    });
+    next(error);
   }
 };
