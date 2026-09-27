@@ -1,7 +1,55 @@
 import { useMemo } from "react";
 import { useVaultStore } from "@/lib/store";
 import { runSecurityAudit } from "@/lib/audit";
-import { ShieldAlert, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
+import {
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  LucideIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface AuditMetricCardProps {
+  icon: LucideIcon;
+  label: string;
+  count: number;
+  variant: "danger" | "warning" | "info";
+}
+
+const variantStyles = {
+  danger:
+    "bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400",
+  warning:
+    "bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400",
+  info: "bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-400",
+};
+
+function AuditMetricCard({
+  icon: Icon,
+  label,
+  count,
+  variant,
+}: AuditMetricCardProps) {
+  const hasIssues = count > 0;
+
+  return (
+    <div
+      className={cn(
+        "p-4 rounded-xl flex items-center justify-between shadow-sm border transition-colors",
+        hasIssues
+          ? variantStyles[variant]
+          : "bg-white/50 dark:bg-neutral-800/30 border-slate-200/50 dark:border-neutral-800/50 text-slate-600 dark:text-slate-400 backdrop-blur-sm",
+      )}
+    >
+      <div className="flex items-center">
+        <Icon className="w-5 h-5 mr-3 opacity-70" />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <span className="text-lg font-bold">{count}</span>
+    </div>
+  );
+}
 
 export function SecurityAudit() {
   const vaultData = useVaultStore((state) => state.vaultData);
@@ -32,43 +80,24 @@ export function SecurityAudit() {
       </div>
       <div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-2">
-          <div
-            className={`p-4 rounded-xl flex items-center justify-between shadow-sm border ${audit.weakPasswords.length > 0 ? "bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : "bg-white/50 dark:bg-neutral-800/30 border-slate-200/50 dark:border-neutral-800/50 text-slate-600 dark:text-slate-400 backdrop-blur-sm"}`}
-          >
-            <div className="flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-3 opacity-70" />
-              <span className="text-sm font-medium">Weak Passwords</span>
-            </div>
-            <span className="text-lg font-bold">
-              {audit.weakPasswords.length}
-            </span>
-          </div>
-
-          <div
-            className={`p-4 rounded-xl flex items-center justify-between shadow-sm border ${audit.reusedPasswords.length > 0 ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-white/50 dark:bg-neutral-800/30 border-slate-200/50 dark:border-neutral-800/50 text-slate-600 dark:text-slate-400 backdrop-blur-sm"}`}
-          >
-            <div className="flex items-center">
-              <ShieldAlert className="w-5 h-5 mr-3 opacity-70" />
-              <span className="text-sm font-medium">Reused Passwords</span>
-            </div>
-            <span className="text-lg font-bold">
-              {audit.reusedPasswords.length}
-            </span>
-          </div>
-
-          <div
-            className={`p-4 rounded-xl flex items-center justify-between shadow-sm border ${audit.oldPasswords.length > 0 ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-400" : "bg-white/50 dark:bg-neutral-800/30 border-slate-200/50 dark:border-neutral-800/50 text-slate-600 dark:text-slate-400 backdrop-blur-sm"}`}
-          >
-            <div className="flex items-center">
-              <Clock className="w-5 h-5 mr-3 opacity-70" />
-              <span className="text-sm font-medium">
-                Old Passwords (&gt;90d)
-              </span>
-            </div>
-            <span className="text-lg font-bold">
-              {audit.oldPasswords.length}
-            </span>
-          </div>
+          <AuditMetricCard
+            icon={AlertTriangle}
+            label="Weak Passwords"
+            count={audit.weakPasswords.length}
+            variant="danger"
+          />
+          <AuditMetricCard
+            icon={ShieldAlert}
+            label="Reused Passwords"
+            count={audit.reusedPasswords.length}
+            variant="warning"
+          />
+          <AuditMetricCard
+            icon={Clock}
+            label="Old Passwords (>90d)"
+            count={audit.oldPasswords.length}
+            variant="info"
+          />
         </div>
       </div>
     </div>
