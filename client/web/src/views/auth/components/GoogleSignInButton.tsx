@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type GoogleSignInButtonProps = {
   onSuccess: (credential: string) => void;
@@ -55,12 +56,12 @@ export function GoogleSignInButton({
   return (
     <div
       ref={containerRef}
-      className={`w-full min-h-11 flex items-center justify-center ${
+      className={`w-full h-11 flex items-center justify-center ${
         inactive ? "pointer-events-none opacity-60" : ""
       }`}
-      aria-busy={loading}
+      aria-busy={loading || width === 0}
     >
-      {width > 0 && (
+      {width > 0 ? (
         <GoogleLogin
           onSuccess={handleSuccess}
           onError={() => onError?.()}
@@ -72,6 +73,8 @@ export function GoogleSignInButton({
           logo_alignment="left"
           containerProps={{ className: "w-full flex justify-center" }}
         />
+      ) : (
+        <Skeleton className="w-full h-11 rounded-xl border border-slate-200/90 dark:border-neutral-800 bg-slate-100 dark:bg-neutral-800/80 shadow-xs" />
       )}
     </div>
   );
