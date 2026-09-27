@@ -71,9 +71,11 @@ interface VaultState {
   addItem: (item: VaultItem) => Promise<void>;
   updateItem: (id: string, item: VaultItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
-  syncVault: () => Promise<void>;
-  fetchAndMerge: () => Promise<void>;
+  syncVault: (retryCount?: number) => Promise<void>;
+  fetchAndMerge: (retryCount?: number) => Promise<void>;
 }
+
+const MAX_SYNC_RETRIES = 3;
 
 export function mergeVaultByUpdatedAt(
   localVault: VaultData,
@@ -136,7 +138,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   setServerVersion: (version) => set({ serverVersion: version }),
 
-  syncVault: async () => {
+  syncVault: async (retryCount = 0) => {
     const { vaultData, encryptionKey, serverVersion, salt } = get();
 
     if (!vaultData || !encryptionKey || serverVersion === null || !salt) {
@@ -166,10 +168,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       set({ serverVersion: response.version });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
-        // Conflict detected, trigger merge
-        console.warn("Vault version conflict detected. Attempting merge...");
+        if (retryCount >= MAX_SYNC_RETRIES) {
+          console.error(
+            "Max sync retries exceeded during conflict resolution.",
+          );
+          set({
+            syncError:
+              "Conflict resolution failed after multiple attempts. Please reload.",
+          });
+          return;
+        }
+
+        console.warn(
+          `Vault conflict detected (attempt ${retryCount + 1}/${MAX_SYNC_RETRIES}). Attempting merge...`,
+        );
         try {
-          await get().fetchAndMerge();
+          await new Promise((res) =>
+            setTimeout(res, 150 * Math.pow(2, retryCount)),
+          );
+          await get().fetchAndMerge(retryCount + 1);
         } catch (mergeError: unknown) {
           console.error("Merge failed:", mergeError);
           set({ syncError: "Conflict resolution failed. Please reload." });
@@ -188,7 +205,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
 
-  fetchAndMerge: async () => {
+  fetchAndMerge: async (retryCount = 0) => {
     const { vaultData: localVault, encryptionKey, salt } = get();
     if (!localVault || !encryptionKey || !salt)
       throw new Error("Missing data for merge");
@@ -217,8 +234,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       serverVersion: serverData.version,
     });
 
-    // 5. Re-sync the merged vault
-    await get().syncVault();
+    // 5. Re-sync the merged vault passing current retryCount
+    await get().syncVault(retryCount);
   },
 
   importVaultBackup: async (imported: VaultData, mode: "merge" | "replace") => {
